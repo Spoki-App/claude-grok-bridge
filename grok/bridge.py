@@ -29,13 +29,11 @@ import time
 import urllib.error
 import urllib.request
 
-PROTOCOL = "claude-grok-bridge/1"
-A2A_STATE = {  # each status as an A2A TaskState, sent as "state" so A2A tools can read answers
-    "answered": "TASK_STATE_COMPLETED", "done": "TASK_STATE_COMPLETED", "accepted": "TASK_STATE_WORKING",
-    "escalated": "TASK_STATE_WORKING", "needs_confirmation": "TASK_STATE_INPUT_REQUIRED", "declined": "TASK_STATE_REJECTED",
-}
-STATUSES = list(A2A_STATE)
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)  # python3 -I leaves the script's own folder off sys.path
+
+from protocol import A2A_STATE, PROTOCOL, STATUSES, problem  # noqa: E402,F401
+
 ROOT = os.path.dirname(HERE)
 INBOX_DOC = os.path.join(ROOT, "claude", "inbox.md")
 LOCAL_CONFIG = os.path.join(HERE, "bridge.local.json")
@@ -215,6 +213,9 @@ def fire_with_cli(routine, text):
 
 
 def deliver(env):
+    reason = problem(env)
+    if reason:
+        return {"delivered": False, "id": env.get("id"), "detail": f"envelope invalid, not sent: {reason}"}
     text = json.dumps(env, ensure_ascii=False, separators=(",", ":"))
     if len(text) > MAX_TEXT:
         sys.exit(f"envelope too large ({len(text)} chars, max {MAX_TEXT})")
@@ -252,7 +253,7 @@ def outbound(kind, agent, body_field, body, session_id, **extra):
     stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d-%H%M%S")
     return {
         "protocol": PROTOCOL, "type": kind, "id": f"{kind[0]}-{stamp}-{secrets.token_hex(2)}",
-        "from": {"kind": AGENT_KIND, "agent": agent, "version": version()},
+        "from": {"kind": AGENT_KIND, "agent": agent, "version": version()}, "to": "claude-code",
         body_field: body, **extra, "reply_to": {"session_id": session_id or None}, "sent_at": now(),
     }
 
@@ -293,7 +294,7 @@ def extract_messages(strings):
                 env, _ = decoder.raw_decode(s, start.start())
             except ValueError:
                 continue
-            if isinstance(env, dict) and env.get("protocol") == PROTOCOL and env.get("id"):
+            if problem(env) is None:
                 found[env["id"]] = env
     return list(found.values())
 

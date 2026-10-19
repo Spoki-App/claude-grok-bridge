@@ -46,6 +46,7 @@ class AnswerTests(Base):
         self.assertEqual((env["type"], env["in_reply_to"], env["answer"], env["status"]), ("answer", "q-1", "PONG", "answered"))
         self.assertEqual(env["reply_to"], {"session_id": "cse_1"})
         self.assertEqual(env["from"], {"kind": "grok-bot", "agent": "CoS", "version": bridge.version()})
+        self.assertEqual(env["to"], "claude-code", "every envelope names its recipient")
 
     def test_answers_carry_the_a2a_state(self):
         states = {s: bridge.answer(QUESTION, "Ava", "x", s)["state"] for s in bridge.STATUSES}
@@ -185,6 +186,11 @@ class PollTests(Base):
                             json.dumps({"type": "assistant", "message": {"content": "plain text"}}),
                             tool_use_line("RemoteTrigger", {"action": "list_runs"})])
         self.assertEqual(bridge.remote_actions(events), ["list_runs"])
+
+    def test_agent_side_refuses_to_send_or_keep_malformed_envelopes(self):
+        bad = {**QUESTION, "id": "../../etc"}
+        self.assertFalse(bridge.deliver(bad)["delivered"])
+        self.assertEqual(bridge.extract_messages(["BRIDGE_MESSAGE " + json.dumps(bad)]), [])
 
     def test_extract_ignores_garbage(self):
         strings = ["BRIDGE_MESSAGE - x", 'BRIDGE_MESSAGE {"protocol": "claude-grok-bridge/1", broken', "BRIDGE_MESSAGE " + json.dumps(QUESTION) + " tail"]

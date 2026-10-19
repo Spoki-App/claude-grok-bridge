@@ -35,17 +35,13 @@ import time
 import urllib.error
 import urllib.request
 
-PROTOCOL = "claude-grok-bridge/1"
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)  # python3 -I leaves the script's own folder off sys.path
+
+from protocol import A2A_STATE, BODY_FIELD, ID_SHAPE, PROTOCOL, STATUSES, problem  # noqa: E402
+
 REPO_URL = "https://github.com/francoCosimo95/claude-grok-bridge"
 DEFAULT_CONFIG = os.path.join(os.path.expanduser("~"), ".config", "grok-bridge", "config.json")
-BODY_FIELD = {"question": "question", "request": "request", "note": "note", "answer": "answer"}
-A2A_STATE = {  # each status as an A2A TaskState, sent as "state" so A2A tools can read answers
-    "answered": "TASK_STATE_COMPLETED", "done": "TASK_STATE_COMPLETED", "accepted": "TASK_STATE_WORKING",
-    "escalated": "TASK_STATE_WORKING", "needs_confirmation": "TASK_STATE_INPUT_REQUIRED", "declined": "TASK_STATE_REJECTED",
-}
-STATUSES = list(A2A_STATE)
-MAX_BYTES = 60_000
 AGENTS_BLOCK = re.compile(r"<!-- grok-bridge:agents -->.*?<!-- /grok-bridge:agents -->", re.S)
 LONG_TOKEN = re.compile(r"[A-Za-z0-9_\-.]{24,}")
 HEADER_PREFIX = re.compile(r"(?i)^\s*authorization\s*:\s*")
@@ -163,20 +159,10 @@ def label():
 
 
 def validate(env):
-    kind = env.get("type")
-    if env.get("protocol") != PROTOCOL or kind not in BODY_FIELD:
-        fail(4, f"ENVELOPE_INVALID: need protocol {PROTOCOL} and type question, request, note or answer")
-    missing = [k for k in ("id", "from", "to", BODY_FIELD[kind]) if not env.get(k)]
-    if missing:
-        fail(4, f"ENVELOPE_INVALID: missing {missing}")
-    if kind == "answer" and (env.get("status") not in STATUSES or not env.get("in_reply_to")):
-        fail(4, f"ENVELOPE_INVALID: an answer needs in_reply_to and a status in {STATUSES}")
-    if env.get("on_behalf_of") and (kind != "request" or not env.get("owner_words")):
-        fail(4, "ENVELOPE_INVALID: on_behalf_of only on a request, with owner_words")
-    raw = json.dumps(env, ensure_ascii=False, separators=(",", ":"))
-    if len(raw.encode()) > MAX_BYTES:
-        fail(4, f"ENVELOPE_TOO_LARGE: {len(raw.encode())} bytes, max {MAX_BYTES}")
-    return raw
+    reason = problem(env)
+    if reason:
+        fail(4, ("ENVELOPE_TOO_LARGE: " if reason.startswith("too large") else "ENVELOPE_INVALID: ") + reason)
+    return json.dumps(env, ensure_ascii=False, separators=(",", ":"))
 
 
 # ---------- delivery ----------
@@ -319,7 +305,7 @@ def cmd_drop(_args):
         env = json.load(sys.stdin)
     except ValueError:
         fail(4, "ENVELOPE_INVALID: stdin is not JSON")
-    if not isinstance(env, dict) or env.get("protocol") != PROTOCOL or not re.fullmatch(r"[A-Za-z0-9_.-]{1,80}", str(env.get("id", ""))):
+    if not isinstance(env, dict) or env.get("protocol") != PROTOCOL or not ID_SHAPE.fullmatch(str(env.get("id", ""))):
         fail(4, f"ENVELOPE_INVALID: needs protocol {PROTOCOL} and a plain id")
     if (env.get("from") or {}).get("kind") == "claude-code":
         fail(4, "ENVELOPE_INVALID: drop carries messages from an agent, not from Claude Code")

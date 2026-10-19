@@ -21,8 +21,9 @@ class RepoConsistencyTests(unittest.TestCase):
 
     def test_skill_copies_are_in_sync(self):
         skill = ROOT / "claude" / "skills" / "grok-bridge"
-        for name in ("VERSION", "PROTOCOL.md"):
+        for name in ("VERSION", "PROTOCOL.md", "protocol.py"):
             self.assertEqual((ROOT / name).read_text(), (skill / name).read_text(), f"run scripts/sync.sh ({name})")
+        self.assertEqual((ROOT / "protocol.py").read_text(), (ROOT / "grok" / "protocol.py").read_text(), "run scripts/sync.sh (grok)")
 
     def test_versions_agree(self):
         version = (ROOT / "VERSION").read_text().strip()
@@ -46,11 +47,14 @@ class RepoConsistencyTests(unittest.TestCase):
             self.assertEqual((ROOT / "assets" / f"chat-{name}.svg").read_text(), chats.render(messages), f"run python3 scripts/chats.py ({name})")
             self.assertIn(f"assets/chat-{name}.svg", (ROOT / "README.md").read_text())
 
-    def test_both_sides_map_statuses_to_the_same_a2a_states(self):
+    def test_both_sides_use_the_one_protocol_module(self):
+        shared = load(ROOT / "protocol.py", "shared_protocol")
         claude = load(ROOT / "claude" / "skills" / "grok-bridge" / "bridge.py", "claude_side")
         grok = load(ROOT / "grok" / "bridge.py", "grok_side")
-        self.assertEqual(claude.A2A_STATE, grok.A2A_STATE)
-        for status, state in claude.A2A_STATE.items():
+        self.assertEqual((claude.A2A_STATE, grok.A2A_STATE, claude.PROTOCOL, grok.PROTOCOL), (shared.A2A_STATE,) * 2 + (shared.PROTOCOL,) * 2)
+        for name in ("claude/skills/grok-bridge/bridge.py", "grok/bridge.py"):
+            self.assertNotIn("TASK_STATE_", (ROOT / name).read_text(), f"{name} must not redefine shared facts")
+        for status, state in shared.A2A_STATE.items():
             self.assertIn(f"`{status}`", (ROOT / "PROTOCOL.md").read_text())
             self.assertIn(f"`{state}`", (ROOT / "PROTOCOL.md").read_text())
 

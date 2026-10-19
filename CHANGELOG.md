@@ -6,6 +6,18 @@ Versioning: [SemVer](https://semver.org/) for the kit. The wire protocol has its
 
 ## [Unreleased]
 
+### Changed
+- One `protocol.py` holds what both sides share (protocol name, types, statuses, A2A states, size
+  and id rules, validation); `scripts/sync.sh` copies it next to each `bridge.py`.
+- Both sides validate envelopes before sending, and the agent's poll keeps only valid ones; ids
+  must be plain (letters, digits, `.`, `-`, `_`), since they name triggers and files.
+
+### Fixed
+- Agent envelopes now always carry `to` (`claude-code`); answers from the agent had none.
+
+### Security
+- SECURITY.md states the trust boundary for relayed owner requests and why they are not signed.
+
 ## [0.10.0] - 2026-10-19
 
 ### Added

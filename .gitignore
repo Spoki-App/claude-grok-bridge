@@ -5,3 +5,4 @@ __pycache__/
 config.json
 grok/bridge.local.json
 grok/bridge.state.json
+grok/inbox/
