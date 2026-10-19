@@ -6,6 +6,10 @@ Versioning: [SemVer](https://semver.org/) for the kit. The wire protocol has its
 
 ## [Unreleased]
 
+### Verified
+- The channel works live: with the development flag, a message left by `bridge.py drop`
+  appears in an open terminal session within seconds (Claude Team org, Claude Code 2.1.303).
+
 ## [0.9.1] - 2026-10-19
 
 ### Fixed

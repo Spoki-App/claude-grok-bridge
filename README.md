@@ -98,7 +98,9 @@ Your agent follows [`grok/BOOTSTRAP.md`](grok/BOOTSTRAP.md) and keeps you posted
   exec), its answer appears in your open session at once instead of waiting for a poll. Channels
   are a research preview: start with
   `claude --dangerously-load-development-channels plugin:grok-bridge@claude-grok-bridge`, terminal
-  only, and Team or Enterprise orgs need an Owner to enable channels. Not yet verified live.
+  only, and Team or Enterprise orgs need an Owner to enable channels. Verified live on 2026-10-19
+  (a dropped message showed up in an open session, which answered on its own); the agent's drop
+  through local exec from its poll routine is still to be checked.
 - **Cloud sessions** need the plugin enabled for the repository. Add to its `.claude/settings.json`:
   `{"extraKnownMarketplaces": {"claude-grok-bridge": {"source": {"source": "github", "repo": "francoCosimo95/claude-grok-bridge"}}}, "enabledPlugins": {"grok-bridge@claude-grok-bridge": true}}`.
   They send through the inbox with their own login and get answers pushed back. No keys.
@@ -210,7 +212,7 @@ the inbox pushes answers from any agent kind. Grok Bot is the first verified pee
 - [x] Answers speak A2A (`state` = A2A `TaskState`, `thread` = `contextId`)
 - [x] Retries never deliver twice (the inbox dedupes by message id)
 - [x] Your agents' names, whatever they are, known to every Claude Code session
-- [ ] Instant answers in local sessions through a Claude Code channel (built, live check pending)
+- [x] Instant answers in local terminal sessions through a Claude Code channel (experimental)
 - [ ] A second verified agent platform
 
 Ideas: [Discussions](https://github.com/francoCosimo95/claude-grok-bridge/discussions).
