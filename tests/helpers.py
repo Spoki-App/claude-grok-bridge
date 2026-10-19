@@ -5,7 +5,7 @@ import os
 import pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-SKILL_SCRIPTS = ROOT / "claude" / "skills" / "grok-bridge" / "scripts"
+SKILL = ROOT / "claude" / "skills" / "grok-bridge"
 GROK = ROOT / "grok"
 
 
@@ -16,12 +16,20 @@ def load(path, name):
     return module
 
 
-def write_config(tmp, data, mode=0o600):
-    path = os.path.join(tmp, "config.json")
-    with open(path, "w") as f:
-        json.dump(data, f)
+def write_config(folder, data, mode=0o600):
+    path = os.path.join(folder, "config.json")
+    pathlib.Path(path).write_text(json.dumps(data))
     os.chmod(path, mode)
     return path
+
+
+def stream_line(text):
+    """One `claude -p --output-format stream-json` event whose tool result carries `text`."""
+    return json.dumps({"type": "user", "message": {"role": "user", "content": [{"type": "tool_result", "content": [{"type": "text", "text": text}]}]}})
+
+
+def result_line(text):
+    return json.dumps({"type": "result", "subtype": "success", "result": text})
 
 
 class FakeResponse(io.BytesIO):
@@ -37,7 +45,7 @@ class FakeResponse(io.BytesIO):
 
 
 class Recorder:
-    """Stands in for urllib.request.urlopen and remembers the last request."""
+    """Stands in for urllib.request.urlopen and keeps the last request."""
 
     def __init__(self, body='{"success":true}', status=200):
         self.body, self.status, self.request = body, status, None

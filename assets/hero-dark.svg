@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="380" viewBox="0 0 1200 380" role="img" aria-label="Claude Code and Grok Bot agents talking through each vendor's own routine endpoints, no middleware">
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="380" viewBox="0 0 1200 380" role="img" aria-label="Claude Code and Grok Bot agents exchanging messages through a Claude inbox routine, no middleware">
   <defs>
     <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#d6d6d6"/></marker>
     <linearGradient id="cc" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#D97757"/><stop offset="1" stop-color="#C15F3C"/></linearGradient>
@@ -24,10 +24,10 @@
   <text class="s" x="862" y="268">plugin: Claude Code</text>
   <path d="M390 150 H810" stroke="#d6d6d6" stroke-width="3" fill="none" marker-end="url(#a)"/>
   <text class="l" x="600" y="132" text-anchor="middle">question  ·  request  ·  note</text>
-  <text class="m" x="600" y="176" text-anchor="middle">Grok routine webhook</text>
+  <text class="m" x="600" y="176" text-anchor="middle">through your Claude inbox routine</text>
   <path d="M810 236 H390" stroke="#d6d6d6" stroke-width="3" fill="none" marker-end="url(#a)"/>
   <text class="l" x="600" y="218" text-anchor="middle">answer, pushed into the session</text>
-  <text class="m" x="600" y="262" text-anchor="middle">Claude Code routine fire API</text>
+  <text class="m" x="600" y="262" text-anchor="middle">same inbox, no keys</text>
   <rect x="487" y="300" width="226" height="34" rx="17" fill="none" stroke="#d6d6d6" stroke-width="1.5"/>
   <text class="c" x="600" y="322" text-anchor="middle">NO MIDDLEWARE</text>
 </svg>

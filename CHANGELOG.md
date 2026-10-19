@@ -6,6 +6,25 @@ Versioning: [SemVer](https://semver.org/) for the kit. The wire protocol has its
 
 ## [Unreleased]
 
+Rebuilt around five pillars: easy, compact, clear, safe, fast. **Breaking for installs**: send
+your Grok agent the setup line again; it migrates routines and paths.
+
+### Changed
+- Claude side is one script, `claude/skills/grok-bridge/bridge.py`, with `ask`, `tell`, `note`,
+  `hello`, `send`, `check`, `peers`, `version`, `add-peer`. It builds envelopes itself: no JSON
+  to write by hand.
+- Agent side is `grok/bridge.py` (`setup`, `poll`, `reply`, `note`, `self-test`, `check`,
+  `version`) and `grok/connector.py`; the plugin lives in `grok/plugin/`.
+- One name for everything: routines "claude-grok-bridge inbox", "claude-grok-bridge poll",
+  "claude-grok-bridge webhook"; skills `grok-bridge` (Claude side) and `claude-code` (agent side).
+- Docs: SETUP merged into the README and BOOTSTRAP, duplicated copies removed (the skill keeps
+  only `VERSION` and `PROTOCOL.md`), SKILL.md halved, PROTOCOL shorter with full examples.
+- `setup` reads the inbox id from the CLI's final result only, and renames the old inbox routine.
+
+### Fixed
+- `install.sh` repairs a broken skill symlink and works without a terminal (zero-touch installs
+  by the agent).
+
 ## [0.4.0] - 2026-10-19
 
 ### Added

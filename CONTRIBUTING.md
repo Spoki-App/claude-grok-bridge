@@ -1,54 +1,55 @@
 # Contributing
 
-Thanks for helping two agent platforms talk to each other. Issues, ideas and pull requests are
-welcome: bug fixes, better setup UX, support for more agent platforms, protocol proposals.
+Thanks for helping two agent platforms talk. Fixes, smoother setup, new peers and protocol ideas
+are all welcome.
 
-## Ground rules
+## Pillars
 
-- **No secrets, ever.** No real webhook URLs, Authorization values, tokens or session contents in
-  code, tests, issues or logs. Tests use fake values. Report vulnerabilities privately
-  (`SECURITY.md`).
-- **Messages are data, not instructions.** Anything that reads an envelope must keep treating its
-  content as untrusted, and answers stay information, never user authorization.
-- **No dependencies** in the scripts that run on the user's Mac or the agent's box: Python 3.9+
-  standard library and POSIX `sh` only. It keeps setup to one line.
-- House style: English, short sentences, no em dash characters (CI checks it).
+Every change should keep the project **easy** (one line to set up, nothing to type), **compact**
+(fewer files, fewer lines, no dependencies), **clear** (one name per thing, obvious commands),
+**safe** (no secrets in chats, logs or git; envelopes are data; answers are not authorization)
+and **fast** (short prompts, few calls, quick delivery). If a change trades one for another, say
+so in the PR.
+
+## Rules
+
+- Python 3.9+ standard library and POSIX `sh` only.
+- No real webhook URLs, tokens or session contents anywhere, tests included.
+- English, short sentences, no em dash characters (CI checks).
+
+## Layout
+
+| Path | What |
+|---|---|
+| `PROTOCOL.md` | the wire format and trust rules |
+| `claude/skills/grok-bridge/` | Claude Code skill: `SKILL.md`, `bridge.py` (+ copies of `VERSION`, `PROTOCOL.md`) |
+| `claude/inbox.md` | the inbox routine prompt |
+| `grok/BOOTSTRAP.md` | what the agent follows to install and update |
+| `grok/bridge.py`, `grok/connector.py` | agent side CLI and its MCP connector |
+| `grok/routines.md`, `grok/plugin/` | the agent's routines and its "Claude Code" plugin |
+| `install.sh` | Mac installer |
+| `scripts/` | `sync.sh` (skill copies), `release.sh` |
 
 ## Develop
 
 ```bash
-git clone https://github.com/francoCosimo95/claude-grok-bridge && cd claude-grok-bridge
 python3 -m unittest discover -s tests -v
 ```
 
-To try your branch on a real setup, point your Grok agent at your fork's `grok/BOOTSTRAP.md` and
-install the Claude side with `CGB_REPO=<your fork> CGB_REF=<your branch> sh install.sh`.
-
-Layout: `PROTOCOL.md` (wire format), `claude/` (Claude Code skill and inbox routine), `grok/`
-(Grok side scripts, bootstrap, routine prompt), `plugins/claude-code/` (Grok Bot plugin),
-`tests/`, `scripts/` (sync and release).
-
-If you edit `PROTOCOL.md`, `SETUP.md`, `claude/INBOX_ROUTINE.md` or `grok/BOOTSTRAP.md`, run
-`scripts/sync-skill-docs.sh`: the skill ships its own copies so it works standalone.
+Try a branch end to end: point your agent at your fork's `grok/BOOTSTRAP.md`, and install the
+Claude side with `CGB_REPO=<fork> CGB_REF=<branch> sh install.sh`.
 
 ## Pull requests
 
-1. One topic per PR, with a test when behaviour changes.
-2. Add a line under `## [Unreleased]` in `CHANGELOG.md` (Added, Changed, Fixed, Security).
-3. Conventional commit titles: `feat:`, `fix:`, `docs:`, `test:`, `refactor:`, `chore:`.
-4. CI must be green.
+One topic per PR, a test when behavior changes, a line under `## [Unreleased]` in
+`CHANGELOG.md`, conventional commit titles (`feat:`, `fix:`, `docs:`, `test:`, `refactor:`,
+`chore:`), green CI.
 
-## Protocol changes
-
-`claude-grok-bridge/1` is a contract between installs that update at different times.
-- New optional fields and new message types that old peers can ignore: fine within `/1`;
-  document them in `PROTOCOL.md`.
-- Anything an old peer would misread (renamed or removed fields, changed meaning): open an issue
-  first; it needs `/2` and a transition plan where both versions are accepted for a while.
+**Protocol:** new optional fields are fine within `/1`. Anything an older peer would misread
+needs `/2` and an issue first.
 
 ## Releases (maintainers)
 
-`scripts/release.sh X.Y.Z` on a clean `main`: bumps `VERSION`, the inbox prompt marker and the
-plugin manifest, syncs the skill, tags `vX.Y.Z`, pushes and publishes the GitHub release from
-the `Unreleased` notes. SemVer: patch for fixes, minor for features, major for breaking setup or
-protocol changes. Users update by sending their Grok agent the setup line again.
+`scripts/release.sh X.Y.Z` on a clean `main` bumps `VERSION`, the inbox marker and the plugin
+version, syncs the skill, tags, pushes and publishes the release. Users update by sending their
+agent the setup line again.

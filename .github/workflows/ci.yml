@@ -24,6 +24,6 @@ jobs:
       - name: Unit and consistency tests
         run: python -W error::ResourceWarning -m unittest discover -s tests -v
       - name: Shell scripts parse
-        run: sh -n install.sh && sh -n scripts/release.sh && sh -n scripts/sync-skill-docs.sh
-      - name: Skill docs are synced
-        run: ./scripts/sync-skill-docs.sh && git diff --exit-code
+        run: for f in install.sh scripts/*.sh; do sh -n "$f"; done
+      - name: Skill copies are in sync
+        run: ./scripts/sync.sh && git diff --exit-code

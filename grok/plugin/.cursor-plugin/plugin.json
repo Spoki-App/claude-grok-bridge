@@ -1,0 +1,17 @@
+{
+  "name": "claude-code",
+  "displayName": "Claude Code",
+  "version": "0.4.0",
+  "description": "Talk with Claude Code sessions: answer their questions and requests, and message them.",
+  "author": {
+    "name": "Cosimo Franco"
+  },
+  "homepage": "https://github.com/francoCosimo95/claude-grok-bridge",
+  "license": "MIT",
+  "keywords": [
+    "claude",
+    "claude-code",
+    "bridge",
+    "agents"
+  ]
+}

@@ -9,7 +9,7 @@ body:
     id: version
     attributes:
       label: Version
-      description: Output of `send_to_grok.py --version` and/or `reply_to_claude.py --version`
+      description: Output of `bridge.py version` (Claude side) and/or `grok/bridge.py version` (agent side)
     validations:
       required: true
   - type: dropdown

@@ -1,0 +1,5 @@
+{
+  "mcpServers": {
+    "claude-code": {"command": "python3", "args": ["/workspace/claude-grok-bridge/grok/connector.py"]}
+  }
+}

@@ -19,20 +19,25 @@ class RepoConsistencyTests(unittest.TestCase):
         offenders = [str(p.relative_to(ROOT)) for p in tracked_files() if EM_DASH in p.read_text(errors="ignore")]
         self.assertEqual(offenders, [], "house style: no em dash characters")
 
-    def test_skill_references_are_in_sync(self):
-        pairs = {"PROTOCOL.md": "PROTOCOL.md", "SETUP.md": "SETUP.md", "claude/INBOX_ROUTINE.md": "INBOX_ROUTINE.md", "grok/BOOTSTRAP.md": "BOOTSTRAP.md"}
-        refs = ROOT / "claude" / "skills" / "grok-bridge" / "references"
-        for src, ref in pairs.items():
-            self.assertEqual((ROOT / src).read_text(), (refs / ref).read_text(), f"run scripts/sync-skill-docs.sh ({src})")
-        self.assertEqual((ROOT / "VERSION").read_text(), (ROOT / "claude/skills/grok-bridge/VERSION").read_text())
+    def test_skill_copies_are_in_sync(self):
+        skill = ROOT / "claude" / "skills" / "grok-bridge"
+        for name in ("VERSION", "PROTOCOL.md"):
+            self.assertEqual((ROOT / name).read_text(), (skill / name).read_text(), f"run scripts/sync.sh ({name})")
 
     def test_versions_agree(self):
         version = (ROOT / "VERSION").read_text().strip()
         self.assertRegex(version, r"^\d+\.\d+\.\d+$")
-        plugin = json.loads((ROOT / "plugins/claude-code/.cursor-plugin/plugin.json").read_text())
-        self.assertEqual(plugin["version"], version)
-        self.assertIn(f"claude-grok-bridge inbox v{version}.", (ROOT / "claude/INBOX_ROUTINE.md").read_text())
+        self.assertEqual(json.loads((ROOT / "grok/plugin/.cursor-plugin/plugin.json").read_text())["version"], version)
+        self.assertIn(f"claude-grok-bridge inbox v{version}.", (ROOT / "claude/inbox.md").read_text())
         self.assertIn(f"## [{version}]", (ROOT / "CHANGELOG.md").read_text())
+
+    def test_no_stale_names(self):
+        stale = ["reply_to_claude.py", "send_to_grok.py", "add_peer.py", "mcp_server.py", "ROUTINE_PROMPT", "INBOX_ROUTINE.md",
+                 "SETUP.md", "sync-skill-docs", "plugins/claude-code"]
+        allowed = {"CHANGELOG.md", "tests/test_repo.py"}
+        hits = [f"{p.relative_to(ROOT)}: {name}" for p in tracked_files() if str(p.relative_to(ROOT)) not in allowed
+                for name in stale if name in p.read_text(errors="ignore")]
+        self.assertEqual(hits, [])
 
     def test_json_files_parse(self):
         for p in tracked_files():
