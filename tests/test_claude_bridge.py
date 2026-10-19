@@ -212,6 +212,19 @@ class AddPeerTests(unittest.TestCase):
         self.assertEqual(text.count("<!-- grok-bridge:agents -->"), 1)
         self.assertIn("Ava (`--to ava`), CoS (`--to cos`)", text)
 
+    def test_claude_md_can_be_skipped_and_says_how_to_undo(self):
+        res = self.add("", "ava", "--name", "Ava", "--inbox-mode")
+        self.assertIn("To undo, delete that block", res.stdout)
+        self.claude_md.unlink()
+        self.add("", "max", "--name", "Max", "--inbox-mode", "--no-claude-md")
+        self.assertFalse(self.claude_md.exists())
+
+    def test_peers_prints_a_line_for_a_repository_claude_md(self):
+        self.add("", "ava", "--name", "Ava", "--inbox-mode", "--no-claude-md")
+        env = {**os.environ, "GROK_BRIDGE_CONFIG": self.cfg}
+        out = subprocess.run([sys.executable, "-I", str(SKILL / "bridge.py"), "peers"], capture_output=True, text=True, env=env).stdout
+        self.assertIn("FOR_REPO_CLAUDE_MD My Grok Bot agents, reachable from Claude Code with the grok-bridge skill: Ava (`--to ava`).", out)
+
     def test_rejects_plain_http(self):
         self.assertNotEqual(self.add(json.dumps({"webhook_url": "http://h.test", "authorization": "Bearer abcdefgh"}), "cos", "--stdin").returncode, 0)
 

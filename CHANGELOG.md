@@ -6,6 +6,16 @@ Versioning: [SemVer](https://semver.org/) for the kit. The wire protocol has its
 
 ## [Unreleased]
 
+### Added
+- `add-peer --no-claude-md` skips the agents block in `~/.claude/CLAUDE.md`; when it writes it,
+  it shows the line and how to undo it.
+- `bridge.py peers` prints a `FOR_REPO_CLAUDE_MD` line for a repository's `CLAUDE.md`, so cloud
+  sessions know the agent's name too.
+
+### Changed
+- README: says which Grok Bot this is, what the bridge relies on (preview or undocumented), and
+  what stays compatible before 1.0.
+
 ## [0.9.2] - 2026-10-19
 
 ### Fixed

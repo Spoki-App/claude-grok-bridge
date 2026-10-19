@@ -9,7 +9,7 @@
   bridge.py hello [--to ava]                      self-test: asks the agent for PONG
   bridge.py send  envelope.json [--to ava]        send a prepared envelope
   bridge.py check [--to ava] | peers | version
-  bridge.py add-peer ava --name Ava [--inbox trig_...] [--inbox-mode [--no-fast-lane] | --stdin]
+  bridge.py add-peer ava --name Ava [--inbox trig_...] [--inbox-mode [--no-fast-lane] | --stdin] [--no-claude-md]
   bridge.py drop < envelope.json                  the agent's local exec leaves a message for local sessions
 
 Delivery: if the peer has a webhook (fast lane) it is POSTed and prints "SENT ... via=webhook".
@@ -262,6 +262,8 @@ def cmd_peers(_args):
     names |= {m.group(1).lower() for k in os.environ if (m := re.match(r"GROK_BRIDGE_(.+)_URL$", k))}
     print("PEERS " + (", ".join(sorted(names)) or "none"))
     print("INBOX " + (os.environ.get("GROK_BRIDGE_INBOX_ROUTINE") or cfg.get("inbox_routine") or "unset"))
+    if cfg.get("peers"):
+        print("FOR_REPO_CLAUDE_MD " + agents_line(cfg["peers"]))
 
 
 def latest_release():
@@ -298,9 +300,11 @@ def cmd_add_peer(args):
     if args.inbox:
         cfg["inbox_routine"] = args.inbox
     print(f"Saved '{args.peer}' to {save_config(cfg)} (only you can read it).")
-    noted = remember_agents(cfg["peers"])
+    noted = None if args.no_claude_md else remember_agents(cfg["peers"])
     if noted:
-        print(f"Listed your agents in {noted}, so Claude Code knows their names.")
+        print(f"Added to {noted}, between <!-- grok-bridge:agents --> markers, so every session knows the name:")
+        print(f"  {agents_line(cfg['peers'])}")
+        print("  To undo, delete that block; to skip it next time, add --no-claude-md.")
     if not args.stdin and not args.inbox_mode:
         print(f"\n  NEXT STEP: go back to {name}'s chat in Grok Bot and write \"done\".\n")
 
@@ -336,15 +340,18 @@ def claude_md_path():
     return os.environ.get("GROK_BRIDGE_CLAUDE_MD", os.path.join(base, "CLAUDE.md"))
 
 
+def agents_line(peers):
+    names = ", ".join(f"{entry.get('name') or key} (`--to {key}`)" for key, entry in sorted(peers.items()))
+    return f"My Grok Bot agents, reachable from Claude Code with the grok-bridge skill: {names}."
+
+
 def remember_agents(peers):
     """Keep one marked block in the user's CLAUDE.md naming their agents, so any name the user
     chose ("Ava", "CoS") reads as a Grok Bot agent in every Claude Code session."""
     path = claude_md_path()
     if not os.path.isdir(os.path.dirname(path)):
         return None
-    names = ", ".join(f"{entry.get('name') or key} (`--to {key}`)" for key, entry in sorted(peers.items()))
-    block = (f"<!-- grok-bridge:agents -->\nMy Grok Bot agents, reachable from Claude Code with the grok-bridge skill: "
-             f"{names}.\n<!-- /grok-bridge:agents -->")
+    block = f"<!-- grok-bridge:agents -->\n{agents_line(peers)}\n<!-- /grok-bridge:agents -->"
     try:
         with open(path) as f:
             text = f.read()
@@ -425,6 +432,7 @@ def main():
     mode.add_argument("--inbox-mode", action="store_true", help="zero-touch, no secrets")
     mode.add_argument("--stdin", action="store_true", help='fast lane from JSON on stdin: {"webhook_url", "authorization"}')
     p.add_argument("--no-fast-lane", action="store_true", help="with --inbox-mode: forget a webhook that no longer exists")
+    p.add_argument("--no-claude-md", action="store_true", help="do not list the agent in ~/.claude/CLAUDE.md")
     p.set_defaults(func=cmd_add_peer)
     args = ap.parse_args()
     args.func(args)

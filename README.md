@@ -4,6 +4,9 @@
 
 **Your Claude Code sessions and your Grok Bot agents, finally on speaking terms.**
 
+For the agents you build in **Grok Bot**, SpaceXAI's desktop app for agents with routines,
+plugins and a shell. Not the Grok chat, and no xAI API key involved.
+
 No servers. No API keys to copy. No glue code. Just one message.
 
 [![CI](https://github.com/francoCosimo95/claude-grok-bridge/actions/workflows/ci.yml/badge.svg)](https://github.com/francoCosimo95/claude-grok-bridge/actions/workflows/ci.yml)
@@ -104,6 +107,8 @@ Your agent follows [`grok/BOOTSTRAP.md`](grok/BOOTSTRAP.md) and keeps you posted
 - **Cloud sessions** need the plugin enabled for the repository. Add to its `.claude/settings.json`:
   `{"extraKnownMarketplaces": {"claude-grok-bridge": {"source": {"source": "github", "repo": "francoCosimo95/claude-grok-bridge"}}}, "enabledPlugins": {"grok-bridge@claude-grok-bridge": true}}`.
   They send through the inbox with their own login and get answers pushed back. No keys.
+  So they also know your agent by name, paste into the repository's `CLAUDE.md` the
+  `FOR_REPO_CLAUDE_MD` line that `python3 -I ~/.claude/skills/grok-bridge/bridge.py peers` prints.
 - **No Claude CLI at all on the agent's box:** give it a token scoped to the inbox routine
   (claude.ai/code/routines, Edit, Add trigger, API) as `CLAUDE_BRIDGE_INBOX_TOKEN`.
 </details>
@@ -169,9 +174,24 @@ The other direction (an agent asks Claude Code) was verified on the Claude side 
 inbox scheduled an answering session that replied correctly about 2 minutes after the question,
 with no approval needed; scheduled runs can start a few minutes late.
 
-Claude Code routines are a research preview; session push relies on reminders that work but are
-not in the public docs, with the inbox log as the documented fallback. Each message is a short
-run on your Claude plan (30 per hour per routine). Claude.ai chat cannot take part.
+**What it relies on.** Some of it is preview or undocumented, so a platform change can break a
+path without notice. The inbox log stays readable in claude.ai/code/routines in every case.
+
+| Relies on | Status | If it changes |
+|---|---|---|
+| Claude Code routines and their fire API | research preview, documented | nothing moves; the core of the bridge |
+| Session reminders (`create_trigger` with `persistent_session_id`) for push into cloud sessions | works, not in the public docs | answers stay in the inbox log; ask "did <agent> answer?" |
+| Scheduled sessions asking approval for connector calls | observed, not documented | why answering sessions reply in their final message, not with a tool |
+| Claude Code channels, development flag | research preview | the local channel stops; sessions check the inbox instead |
+| Grok Bot routines, webhook trigger, local exec | Grok Bot features | poll interval or fast lane change; the setup line repairs it |
+
+Each message is a short run on your Claude plan (30 per hour per routine). Claude.ai chat cannot
+take part. A scheduled smoke test is planned ([#1](https://github.com/francoCosimo95/claude-grok-bridge/issues/1)).
+
+**Compatibility.** Until 1.0, minor versions may change commands. These are meant to stay: the
+`claude-grok-bridge/1` envelope (new fields are optional, readers ignore unknown ones), the
+`ask`, `tell`, `note`, `answer` commands, the inbox's three output lines, and the one setup line.
+1.0 comes after weeks of real use with no breaking change ([#2](https://github.com/francoCosimo95/claude-grok-bridge/issues/2)).
 
 ## FAQ
 
