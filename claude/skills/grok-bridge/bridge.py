@@ -240,6 +240,10 @@ def cmd_check(args):
     t = resolve(peer)
     note = "" if t["configured"] else " (not configured here: messages go through the inbox)"
     print(f"CONFIG_OK peer={peer} name={t['name']} mode={t['mode']} inbox={t['inbox'] or 'FIND:claude-grok-bridge inbox'} version={version()}{note}")
+    if t["mode"] == "inbox":
+        print(f"FAST_LANE off: messages wait for {t['name']}'s poll (minutes). For seconds, in Grok Bot open {t['name']}, "
+              f"Routines, 'claude-grok-bridge webhook', keep its URL and Authorization at hand, and run in a terminal: "
+              f"python3 -I {os.path.join(HERE, 'bridge.py')} add-peer {peer} --name {t['name']}")
 
 
 def cmd_peers(_args):

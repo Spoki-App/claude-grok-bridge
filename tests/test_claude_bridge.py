@@ -53,6 +53,14 @@ class ResolveTests(Base):
         t = bridge.resolve("cos")
         self.assertEqual((t["mode"], t["url"], t["auth"], t["inbox"], t["name"]), ("webhook", URL, AUTH, "trig_A", "CoS"))
 
+    def test_check_says_how_to_turn_the_fast_lane_on(self):
+        self.config({"inbox_routine": "trig_A", "peers": {"cos": {"name": "CoS", "mode": "inbox"}}})
+        out = run("check", "--to", "cos")[1]
+        self.assertIn("FAST_LANE off", out)
+        self.assertIn("add-peer cos --name CoS", out)
+        self.config({"inbox_routine": "trig_A", "peers": {"cos": {"name": "CoS", "webhook_url": URL, "authorization": AUTH}}})
+        self.assertNotIn("FAST_LANE off", run("check", "--to", "cos")[1])
+
     def test_env_overrides_and_header_prefix_is_stripped(self):
         self.config({"peers": {}})
         os.environ.update({"GROK_BRIDGE_COS_URL": "https://env.example.test/x", "GROK_BRIDGE_COS_AUTH": "Authorization: Bearer env"})

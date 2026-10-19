@@ -92,8 +92,10 @@ Your agent follows [`grok/BOOTSTRAP.md`](grok/BOOTSTRAP.md) and keeps you posted
 - **Claude CLI signed in on its box.** If not, it asks you once to sign in.
 - **Local exec on your Mac** (Grok Bot's). Without it you paste one line in the Terminal:
   `curl -fsSL https://github.com/francoCosimo95/claude-grok-bridge/releases/latest/download/install.sh | sh -s -- <peer> --name <Agent> --inbox <trig id> --inbox-mode`
-- **Fast lane (optional).** If the agent can read its webhook routine's key, it stores it on
-  your Mac (`chmod 600`) and messages reach it in about a second instead of its poll interval.
+- **Fast lane (optional, recommended).** Messages reach the agent in about a second instead of
+  its poll interval, and the agent can poll less often. If the agent cannot read its webhook
+  routine's key, `bridge.py check` prints the one command to run (it asks for the URL and key,
+  hidden, and stores them `chmod 600`).
 - **Claude Code plugin.** The agent installs the skill for you; you can also install it yourself:
   `/plugin install grok-bridge --marketplace francoCosimo95/claude-grok-bridge`
 - **Instant answers in a terminal session (experimental).** The plugin includes a Claude Code

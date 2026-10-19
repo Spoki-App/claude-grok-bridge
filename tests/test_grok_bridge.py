@@ -159,6 +159,12 @@ class PollTests(Base):
         moved = bridge.datetime.datetime.strptime(self.state()["since"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=bridge.datetime.timezone.utc)
         self.assertLess(moved, before - bridge.OVERLAP + bridge.datetime.timedelta(seconds=5))
 
+    def test_poll_runs_on_the_small_model(self):
+        with cli(DONE) as run:
+            bridge.poll("cos")
+        cmd = run.call_args.args[0]
+        self.assertEqual(cmd[cmd.index("--model") + 1], "haiku", "the most frequent call should be the cheapest")
+
     def test_poll_refuses_actions_outside_read_only(self):
         with cli(tool_use_line("RemoteTrigger", {"action": "update", "trigger_id": "trig_X"}) + "\n" + DONE), self.assertRaises(SystemExit) as ctx:
             bridge.poll("cos")

@@ -6,6 +6,13 @@ Versioning: [SemVer](https://semver.org/) for the kit. The wire protocol has its
 
 ## [Unreleased]
 
+### Changed
+- Faster and cheaper polling: the agent's poll runs on the small model (`haiku`, override with
+  `CLAUDE_BRIDGE_POLL_MODEL`), since it only lists runs and reads logs.
+- Setup never recreates an existing webhook routine (a new one breaks the owner's fast lane), and
+  relaxes the poll to every 15 minutes when the fast lane works: the poll is then a safety net.
+- When the fast lane is off, the agent's final report and `bridge.py check` say how to turn it on.
+
 ## [0.11.0] - 2026-10-19
 
 ### Changed

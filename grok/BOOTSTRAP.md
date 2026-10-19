@@ -31,8 +31,11 @@ prompt current. `check` must show a `trig_...` inbox and `claude_cli_found: true
 Prompts are in `/workspace/claude-grok-bridge/grok/routines.md`. Create each if missing, or reset
 its prompt. Delete routines from older releases named "Claude Code bridge" or
 "Claude Code bridge poll".
-1. **"claude-grok-bridge poll"**: scheduled at the shortest interval allowed. Note the interval.
-2. **"claude-grok-bridge webhook"**: webhook trigger, the optional fast lane.
+1. **"claude-grok-bridge poll"**: scheduled at the shortest interval allowed for now; step 3 may
+   relax it. Note the interval.
+2. **"claude-grok-bridge webhook"**: webhook trigger, the optional fast lane. If it already
+   exists, only reset its prompt: never delete or recreate it, since a new one gets a new URL
+   and key and your owner's fast lane stops working.
 3. **Plugin "Claude Code"**, created the way you create your other plugins: connector = stdio
    command `python3 /workspace/claude-grok-bridge/grok/connector.py`; skill =
    `grok/plugin/skills/claude-code/SKILL.md`; metadata = `grok/plugin/.cursor-plugin/plugin.json`
@@ -51,7 +54,10 @@ values, add `--no-fast-lane` to that line: the Mac forgets the old webhook. Fast
 you can read your webhook routine's URL and Authorization value: pipe
 `{"webhook_url": "...", "authorization": "..."}` into
 `python3 -I ~/.claude/skills/grok-bridge/bridge.py add-peer PEER --name AGENT --stdin`.
-Never put those values in a chat or a message (they stay only in your own tool history). No local exec? **Next step for you:** open the
+Never put those values in a chat or a message (they stay only in your own tool history).
+Then run `python3 -I ~/.claude/skills/grok-bridge/bridge.py check --to PEER` on the Mac. If it
+says `mode=webhook`, the fast lane works and your poll is only a safety net: set it to every 15
+minutes, which saves runs. Otherwise keep the shortest interval. No local exec? **Next step for you:** open the
 Terminal app, paste the line above, press Enter.
 
 ## Step 4 of 5: self-test
@@ -71,6 +77,10 @@ the Claude Code plugin (`ask_claude_code`) or `bridge.py ask`." Then when your o
 ## Step 5 of 5: report
 
 "Bridge ready (version X.Y.Z). Claude Code reaches me within N minutes" (N = your poll interval;
-add "or seconds through the fast lane" if set). Then three examples: in Claude Code
+add "or seconds through the fast lane" if set). If the fast lane is off, add one optional line:
+"For answers in seconds: open my routine 'claude-grok-bridge webhook', keep its URL and
+Authorization at hand, and run on your Mac `python3 -I ~/.claude/skills/grok-bridge/bridge.py
+add-peer PEER --name AGENT` (it asks for both, hidden). Then tell me 'fast lane on'." When they
+do, check it as in step 3 and relax the poll. Then three examples: in Claude Code
 `ask AGENT whether ...` and `tell AGENT to ...`; and to you, "ask Claude Code ...". End with **Nothing to do, the bridge is ready.**
 If a step failed: which one, why, and the one next step.

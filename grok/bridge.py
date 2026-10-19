@@ -152,14 +152,14 @@ def remote_actions(stdout):
     return actions
 
 
-def run_cli(prompt, allowed, tools=("RemoteTrigger",), timeout=300):
+def run_cli(prompt, allowed, tools=("RemoteTrigger",), timeout=300, model=None):
     """Run the box's Claude CLI. Returns (ok, every transcript string, final result text or error).
     Any RemoteTrigger action outside `allowed` fails the call: the model may have read injected instructions."""
     claude = shutil.which("claude")
     if not claude:
         return False, [], "claude CLI not found on this box (npm install -g @anthropic-ai/claude-code)"
     cmd = [claude, "-p", prompt, "--allowedTools", *tools, "--output-format", "stream-json", "--verbose",
-           "--model", os.environ.get("CLAUDE_BRIDGE_CLI_MODEL", "sonnet")]
+           "--model", model or os.environ.get("CLAUDE_BRIDGE_CLI_MODEL", "sonnet")]
     try:
         out = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, stdin=subprocess.DEVNULL)
     except subprocess.TimeoutExpired:
@@ -310,7 +310,9 @@ def poll(peer):
     since_dt = datetime.datetime.strptime(state["since"], "%Y-%m-%dT%H:%M:%SZ")
     ask_since = (since_dt - ASK_WINDOW).strftime("%Y-%m-%dT%H:%M:%SZ")
     prompt = POLL_PROMPT.format(routine=inbox_routine(), since=state["since"], ask_since=ask_since)
-    ok, strings, result = run_cli(prompt, {"list", "list_runs", "get_run_log"}, timeout=420)
+    # Polling only lists and reads logs, so it runs on the small model: it is the most frequent call.
+    ok, strings, result = run_cli(prompt, {"list", "list_runs", "get_run_log"}, timeout=420,
+                                  model=os.environ.get("CLAUDE_BRIDGE_POLL_MODEL", "haiku"))
     if not ok:
         sys.exit(f"poll failed: {result}")
     seen, paths = list(state["seen"]), []
