@@ -6,6 +6,8 @@ Versioning: [SemVer](https://semver.org/) for the kit. The wire protocol has its
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-10-19
+
 ### Added
 - `add-peer --no-claude-md` skips the agents block in `~/.claude/CLAUDE.md`; when it writes it,
   it shows the line and how to undo it.
