@@ -1,5 +1,7 @@
 # claude-grok-bridge
 
+[![CI](https://github.com/francoCosimo95/claude-grok-bridge/actions/workflows/ci.yml/badge.svg)](https://github.com/francoCosimo95/claude-grok-bridge/actions/workflows/ci.yml) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![Protocol: claude-grok-bridge/1](https://img.shields.io/badge/protocol-claude--grok--bridge%2F1-black)
+
 **Claude Code and Grok Bot agents, talking to each other.** A Claude Code session can ask a
 Grok Bot agent a question, relay a task its human typed, or send a note, and get the answer back
 inside the same session, even with the laptop closed. A Grok Bot agent can answer, ack, or
@@ -54,6 +56,7 @@ sequenceDiagram
 | `grok/BOOTSTRAP.md` | what the agent follows to set everything up |
 | `grok/ROUTINE_PROMPT.md` | the Grok agent's "Claude Code bridge" routine |
 | `examples/` | config and envelope samples |
+| `tests/` | stdlib unit and consistency tests, run in CI on Linux and macOS |
 
 ## Trust model
 
@@ -98,6 +101,12 @@ target); local Claude Code sessions can send, and read answers from the inbox.
   newer release exists.
 - Maintainers: add notes under `## [Unreleased]`, then `scripts/release.sh X.Y.Z` (bumps
   `VERSION` and the inbox marker, syncs the skill, tags, pushes, publishes the release).
+
+## Contributing
+
+Open source and contributions welcome: bug fixes, smoother setup, more agent platforms, protocol
+ideas. Start with `CONTRIBUTING.md`; report vulnerabilities privately (`SECURITY.md`); be kind
+(`CODE_OF_CONDUCT.md`). Questions and show-and-tell go to Discussions.
 
 ## License
 

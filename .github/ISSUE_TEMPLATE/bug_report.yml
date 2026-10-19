@@ -1,0 +1,28 @@
+name: Bug report
+description: Something in the bridge does not work as documented
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "Never paste webhook URLs, Authorization values, tokens or session contents here. For security issues, use a private advisory (see SECURITY.md)."
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `send_to_grok.py --version` and/or `reply_to_claude.py --version`
+    validations:
+      required: true
+  - type: dropdown
+    id: side
+    attributes:
+      label: Where does it fail?
+      options: [Setup / bootstrap, Claude Code to Grok Bot, Grok Bot to Claude Code, Inbox routine, Grok plugin / connector, Other]
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+      description: Steps, the step number the agent reported, and redacted output.
+    validations:
+      required: true

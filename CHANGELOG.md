@@ -6,6 +6,12 @@ Versioning: [SemVer](https://semver.org/) for the kit. The wire protocol has its
 
 ## [Unreleased]
 
+### Added
+- Open source project setup: `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, issue and PR
+  templates.
+- Test suite (`tests/`, standard library only) and CI on Linux and macOS: unit tests for every
+  script, MCP handshake, em dash check, skill docs sync, version consistency, secret scan.
+
 ## [0.2.0] - 2026-10-19
 
 ### Added

@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python: ["3.9", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Unit and consistency tests
+        run: python -W error::ResourceWarning -m unittest discover -s tests -v
+      - name: Shell scripts parse
+        run: sh -n install.sh && sh -n scripts/release.sh && sh -n scripts/sync-skill-docs.sh
+      - name: Skill docs are synced
+        run: ./scripts/sync-skill-docs.sh && git diff --exit-code

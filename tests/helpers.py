@@ -1,0 +1,47 @@
+import importlib.util
+import io
+import json
+import os
+import pathlib
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+SKILL_SCRIPTS = ROOT / "claude" / "skills" / "grok-bridge" / "scripts"
+GROK = ROOT / "grok"
+
+
+def load(path, name):
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def write_config(tmp, data, mode=0o600):
+    path = os.path.join(tmp, "config.json")
+    with open(path, "w") as f:
+        json.dump(data, f)
+    os.chmod(path, mode)
+    return path
+
+
+class FakeResponse(io.BytesIO):
+    def __init__(self, body, status=200):
+        super().__init__(body.encode())
+        self.status = status
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+
+class Recorder:
+    """Stands in for urllib.request.urlopen and remembers the last request."""
+
+    def __init__(self, body='{"success":true}', status=200):
+        self.body, self.status, self.request = body, status, None
+
+    def __call__(self, request, timeout=None):
+        self.request = request
+        return FakeResponse(self.body, self.status)

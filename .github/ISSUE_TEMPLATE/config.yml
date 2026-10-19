@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and ideas
+    url: https://github.com/francoCosimo95/claude-grok-bridge/discussions
+    about: Ask how to set it up, share what you built with it.
+  - name: Report a vulnerability
+    url: https://github.com/francoCosimo95/claude-grok-bridge/security/advisories/new
+    about: Privately, never in a public issue.

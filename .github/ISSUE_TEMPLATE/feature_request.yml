@@ -1,0 +1,18 @@
+name: Feature or protocol proposal
+description: Propose an improvement, a new message type, or support for another agent platform
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What can't you do today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: If it changes envelopes, say whether old peers keep working (see CONTRIBUTING.md, Protocol changes).
+    validations:
+      required: true
