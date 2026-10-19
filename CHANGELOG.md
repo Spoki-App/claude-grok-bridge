@@ -6,6 +6,8 @@ Versioning: [SemVer](https://semver.org/) for the kit. The wire protocol has its
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-19
+
 ### Added
 - **Zero-touch mode, now the default.** Claude Code sessions send through the inbox routine with
   the login they already have; the agent collects its messages with a scheduled
