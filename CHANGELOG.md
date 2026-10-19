@@ -6,6 +6,8 @@ Versioning: [SemVer](https://semver.org/) for the kit. The wire protocol has its
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-10-19
+
 ### Added
 - **A2A vocabulary.** Answers carry `state`, the `status` as an A2A `TaskState`
   (`TASK_STATE_COMPLETED`, `TASK_STATE_WORKING`, `TASK_STATE_INPUT_REQUIRED`,
