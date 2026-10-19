@@ -3,7 +3,7 @@ import re
 import subprocess
 import unittest
 
-from helpers import ROOT
+from helpers import ROOT, load
 
 EM_DASH = chr(0x2014)
 TEXT_SUFFIXES = {".md", ".py", ".sh", ".json", ".txt", ".yml", ".yaml", ""}
@@ -39,6 +39,12 @@ class RepoConsistencyTests(unittest.TestCase):
         hits = [f"{p.relative_to(ROOT)}: {name}" for p in tracked_files() if str(p.relative_to(ROOT)) not in allowed
                 for name in stale if name in p.read_text(errors="ignore")]
         self.assertEqual(hits, [])
+
+    def test_readme_chats_match_their_source(self):
+        chats = load(ROOT / "scripts" / "chats.py", "chats")
+        for name, messages in chats.CHATS.items():
+            self.assertEqual((ROOT / "assets" / f"chat-{name}.svg").read_text(), chats.render(messages), f"run python3 scripts/chats.py ({name})")
+            self.assertIn(f"assets/chat-{name}.svg", (ROOT / "README.md").read_text())
 
     def test_json_files_parse(self):
         for p in tracked_files():

@@ -49,48 +49,27 @@ Illustrative exchanges. Measured: an answer is back in the asking session in abo
 
 **Unblock a coding session.** A decision your agent owns, answered without leaving the terminal.
 
-```text
-you          ›  ask CoS whether to merge develop now or wait for the migration PR
-CoS · Grok   ›  B. Wait: the migration touches the same model, you'd resolve the conflict twice.
-Claude Code  ›  Waiting, then. I'll pick up the next task meanwhile.
-```
+<img src="assets/chat-unblock.svg" width="620" alt="you › ask CoS whether to merge develop now or wait for the migration PR / CoS · Grok › B. Wait: the migration touches the same model, you'd resolve the conflict twice. / Claude Code › Waiting, then. I'll pick up the next task meanwhile.">
 
 **Delegate from your terminal.** Your agent does it under its own rules, and asks first when it should.
 
-```text
-you          ›  tell CoS to move card #1234 to review and ping the reviewer
-CoS · Grok   ›  accepted. Card moved, reviewer pinged on chat.                  done
-```
+<img src="assets/chat-delegate.svg" width="620" alt="you › tell CoS to move card #1234 to review and ping the reviewer / CoS · Grok › accepted. Card moved, reviewer pinged on chat. done">
 
 **Get the context Claude is missing.** It asks the agent that knows, instead of guessing.
 
-```text
-Claude Code  ›  This PR has no card. Asking CoS.
-CoS · Grok   ›  It belongs to card #1234. Dana owns it, Sam reviews.
-Claude Code  ›  Linked the PR to #1234 in the description.
-```
+<img src="assets/chat-context.svg" width="620" alt="Claude Code › This PR has no card. Asking CoS. / CoS · Grok › It belongs to card #1234. Dana owns it, Sam reviews. / Claude Code › Linked the PR to #1234 in the description.">
 
 **Keep your agents in the loop.** A note, no reply needed.
 
-```text
-you          ›  note to CoS: PR 42 is merged, staging is next
-CoS · Grok   ›  (updates its board and follow-ups)
-```
+<img src="assets/chat-note.svg" width="620" alt="you › note to CoS: PR 42 is merged, staging is next / CoS · Grok › (updates its board and follow-ups)">
 
 **Your agent asks Claude Code.** Tell your agent, it asks Claude; a cloud session looks it up and answers.
 
-```text
-you → CoS    ›  ask Claude Code which services still call the v1 billing endpoint
-Claude Code  ›  (new cloud session, read-only) Three: checkout, invoices, the nightly export job.
-CoS · Grok   ›  Claude Code says three services: checkout, invoices, nightly export.
-```
+<img src="assets/chat-agent-asks.svg" width="620" alt="you → CoS › ask Claude Code which services still call the v1 billing endpoint / Claude Code › (new cloud session, read-only) Three: checkout, invoices, the nightly export job. / CoS · Grok › Claude Code says three services: checkout, invoices, nightly export.">
 
 **Let your agent steer a running session**, even at 2 a.m. with your laptop closed.
 
-```text
-CoS · Grok   ›  [note] The spec changed: use the v2 endpoint, v1 is frozen.
-Claude Code  ›  Got it from CoS. Switching the client to v2 before I open the PR.
-```
+<img src="assets/chat-steer.svg" width="620" alt="CoS · Grok › [note] The spec changed: use the v2 endpoint, v1 is frozen. / Claude Code › Got it from CoS. Switching the client to v2 before I open the PR.">
 
 ## What happens when you send it
 

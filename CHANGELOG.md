@@ -6,6 +6,10 @@ Versioning: [SemVer](https://semver.org/) for the kit. The wire protocol has its
 
 ## [Unreleased]
 
+### Changed
+- README use cases are chat images (Grok black, Claude orange), generated from
+  `scripts/chats.py`; a test keeps them in sync.
+
 ## [0.8.0] - 2026-10-19
 
 ### Added

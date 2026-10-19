@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="224" viewBox="0 0 760 224" role="img" aria-label="CoS · Grok: [note] The spec changed: use the v2 endpoint, v1 is frozen. / Claude Code: Got it from CoS. Switching the client to v2 before I open the PR.">
+<style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Helvetica,Arial,sans-serif}.b{font-size:15px}.l{font-size:12px;font-weight:600;fill:#8a8a8e;letter-spacing:.02em}</style>
+<text class="l" x="28" y="29" text-anchor="start">CoS · Grok</text>
+<rect x="24" y="38" width="424" height="62" rx="16" fill="#0b0b0b" stroke="#3a3a3a"/>
+<text class="b" x="40" y="65" fill="#ffffff">[note] The spec changed: use the v2 endpoint, v1 is</text>
+<text class="b" x="40" y="87" fill="#ffffff">frozen.</text>
+<text class="l" x="732" y="129" text-anchor="end">Claude Code</text>
+<rect x="304" y="138" width="432" height="62" rx="16" fill="#D97757" stroke="#D97757"/>
+<text class="b" x="320" y="165" fill="#ffffff">Got it from CoS. Switching the client to v2 before I</text>
+<text class="b" x="320" y="187" fill="#ffffff">open the PR.</text>
+</svg>
