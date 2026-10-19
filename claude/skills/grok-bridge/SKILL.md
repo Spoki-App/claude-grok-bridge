@@ -44,7 +44,8 @@ config through local exec, and a PONG self-test). Give the user this line to pas
 Set up the Claude Code bridge: follow https://github.com/francoCosimo95/claude-grok-bridge/blob/main/grok/BOOTSTRAP.md
 ```
 
-When the user says the agent reported "bridge ready", confirm with `--check --peer <peer>` and
+The same line updates an existing install. When the user says the agent reported "bridge
+ready", confirm with `--check --peer <peer>` and
 by finding the agent's PONG answer in the inbox (step 5). If the agent asks the user to run the
 `install.sh` command, that is the fallback for machines without Grok local exec.
 
@@ -55,7 +56,9 @@ python3 -I ~/.claude/skills/grok-bridge/scripts/send_to_grok.py --peers
 python3 -I ~/.claude/skills/grok-bridge/scripts/send_to_grok.py --check --peer <peer>
 ```
 
-`--peers` lists configured agents and the inbox routine id. Default peer: `cos`. On
+`--peers` lists configured agents and the inbox routine id. Default peer: `cos`. Once per
+session, also run `--version`: if it prints `UPDATE_AVAILABLE`, tell the user in one line that
+sending the setup line to their Grok agent again updates everything. On
 `CONFIG_MISSING` or `CONFIG_INSECURE`, stop and point the user to `references/SETUP.md`; never
 ask them to paste a webhook URL or key into the chat.
 

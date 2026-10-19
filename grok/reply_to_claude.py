@@ -35,22 +35,34 @@ MAX_TEXT = 60_000
 STATUSES = ["answered", "accepted", "escalated", "needs_confirmation", "done", "declined"]
 TOKENISH = re.compile(r"sk-ant-[A-Za-z0-9_\-]+")
 LOCAL_CONFIG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bridge.local.json")
+VERSION_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "VERSION")
 INBOX_DOC = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "claude", "INBOX_ROUTINE.md")
 CLI_PROMPT = (
     "Use the RemoteTrigger tool exactly once: action \"run\", trigger_id \"{routine}\", body "
     "{{\"text\": <the JSON string below, passed verbatim as a string>}}. Do nothing else. Then reply "
     "with only the HTTP status line the tool returned.\n\n{text}"
 )
-DISCOVER_PROMPT = """You are setting up claude-grok-bridge on this Claude account. Use only the RemoteTrigger tool,
-the Read tool and the schedule skill. Do nothing else.
-1. RemoteTrigger action "list". If an enabled routine named exactly "Grok bridge inbox" exists,
-   reply with only its id (trig_...) and stop.
-2. Otherwise create it. Read {inbox_doc} for the create body and the inbox prompt. For
-   environment_id, load the schedule skill to see this account's environments and pick the one
-   named "Default" (else the first). Generate a fresh lowercase UUID for the event. Then call
-   RemoteTrigger "update" on the new routine so mcp_connections contains only the
-   Claude_Code_Remote connector, exactly as the doc says.
-3. Reply with only the new routine id (trig_...), or NONE and one short reason if you could not."""
+DISCOVER_PROMPT = """You are setting up or updating claude-grok-bridge on this Claude account. Use only the
+RemoteTrigger tool, the Read tool and the schedule skill. Do nothing else.
+Read {inbox_doc}: it has the create body and, under "Inbox prompt", the prompt text (the fenced
+block). Its first line is a version marker like "claude-grok-bridge inbox vX.Y.Z.".
+1. RemoteTrigger action "list". If an enabled routine named exactly "Grok bridge inbox" exists:
+   if its prompt does not start with that same marker line, call RemoteTrigger "update" on it,
+   setting job_config.ccr.events to one user event whose content is the doc's prompt (keep its
+   environment_id and session_context). Then reply with only its id (trig_...) and stop.
+2. Otherwise create it from the doc. For environment_id, load the schedule skill to see this
+   account's environments and pick the one named "Default" (else the first). Generate a fresh
+   lowercase UUID for the event. Then call RemoteTrigger "update" on the new routine so
+   mcp_connections contains only the Claude_Code_Remote connector, exactly as the doc says.
+3. Reply with only the routine id (trig_...), or NONE and one short reason if you could not."""
+
+
+def version():
+    try:
+        with open(VERSION_FILE) as f:
+            return f.read().strip()
+    except OSError:
+        return "unknown"
 
 
 def inbox_routine():
@@ -85,7 +97,7 @@ def build_answer(args):
         "type": "answer",
         "id": f"a-{uuid.uuid4().hex[:12]}",
         "in_reply_to": in_reply_to,
-        "from": {"kind": "grok-bot", "agent": args.agent},
+        "from": {"kind": "grok-bot", "agent": args.agent, "version": version()},
         "status": args.status,
         "answer": answer,
         "reply_to": {"session_id": session_id or None},
@@ -166,6 +178,7 @@ def check():
     except SystemExit as e:
         routine = f"MISSING: {e}"
     return {
+        "version": version(),
         "protocol": PROTOCOL,
         "inbox_routine": routine,
         "mode": "token" if token else "cli",
@@ -176,6 +189,7 @@ def check():
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true")
+    ap.add_argument("--version", action="store_true")
     ap.add_argument("--discover", action="store_true", help="find (or create) the owner's 'Grok bridge inbox' routine and save its id")
     ap.add_argument("--inbox", help="with --discover: use this trig_... id instead of looking it up")
     ap.add_argument("--question", help="path to the envelope JSON being answered")
@@ -186,6 +200,9 @@ def main():
     ap.add_argument("--answer")
     ap.add_argument("--answer-file")
     args = ap.parse_args()
+    if args.version:
+        print(f"claude-grok-bridge {version()} (protocol {PROTOCOL})")
+        return
     if args.discover:
         print(f"inbox_routine={discover(args.inbox)} saved to {LOCAL_CONFIG}")
         return

@@ -22,6 +22,16 @@ What the agent needs, and asks you for only if missing:
 - local exec on your Mac; without it, you run one command it gives you (`install.sh`, hidden
   input for the two values).
 
+## Updating
+
+Send your Grok agent **the same line again**. Setup is idempotent: the agent moves its box to the
+latest release, refreshes the inbox routine prompt if it changed, reinstalls the Claude skill on
+your Mac, reruns the self-test and tells you the new version. Check what you have with:
+
+```bash
+python3 -I ~/.claude/skills/grok-bridge/scripts/send_to_grok.py --version
+```
+
 ## Fallbacks
 
 - The agent cannot use a Claude CLI at all: generate an API token on the inbox routine

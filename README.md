@@ -44,7 +44,8 @@ sequenceDiagram
 |---|---|
 | `PROTOCOL.md` | `claude-grok-bridge/1`: envelopes (`question`, `request`, `note`, `answer`), statuses, trust rules |
 | `SETUP.md` | setup: one line to your Grok agent, everything else is automatic |
-| `install.sh` | fallback Mac installer when the agent has no local exec |
+| `install.sh` | Mac installer and updater (pinned to the latest release) |
+| `VERSION`, `CHANGELOG.md`, `scripts/release.sh` | versioning and one-command releases |
 | `claude/skills/grok-bridge/` | Claude Code skill + `send_to_grok.py` |
 | `claude/INBOX_ROUTINE.md` | the inbox routine (create body + prompt) |
 | `grok/mcp_server.py` | Grok Bot custom connector **"claude-code"** (stdio MCP): `check_bridge`, `read_envelope`, `reply_to_claude` |
@@ -84,6 +85,18 @@ Caveats: Claude Code routines are a research preview. The push step relies on se
 path is the documented fallback. Fires count against the Claude plan's usage: 30 per hour per
 routine, 100 per hour per account. Claude.ai chat cannot take part (no outbound HTTP, no push
 target); local Claude Code sessions can send, and read answers from the inbox.
+
+## Versions and updates
+
+- Releases are tagged `vX.Y.Z` (SemVer) with notes in `CHANGELOG.md` and on GitHub Releases.
+  Installs pin to the latest release tag, never to `main`, so a push does not change a running
+  agent until you update.
+- The wire protocol (`claude-grok-bridge/1`) is versioned on its own and only changes on a
+  breaking change. Every envelope carries the sender's kit version in `from.version`.
+- **Update = send your Grok agent the setup line again.** Claude side: `--version` tells you if a
+  newer release exists.
+- Maintainers: add notes under `## [Unreleased]`, then `scripts/release.sh X.Y.Z` (bumps
+  `VERSION` and the inbox marker, syncs the skill, tags, pushes, publishes the release).
 
 ## License
 

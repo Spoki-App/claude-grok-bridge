@@ -5,6 +5,7 @@ Usage:
   python3 -I send_to_grok.py --check [--peer cos]
   python3 -I send_to_grok.py --peer cos --envelope question.json
   python3 -I send_to_grok.py --peers
+  python3 -I send_to_grok.py --version
   python3 -I send_to_grok.py --peer cos --hello
 
 Config, first match wins:
@@ -23,6 +24,7 @@ import json
 import os
 import re
 import stat
+import subprocess
 import sys
 import urllib.error
 import urllib.request
@@ -31,7 +33,27 @@ PROTOCOL = "claude-grok-bridge/1"
 DEFAULT_CONFIG = os.path.join(os.path.expanduser("~"), ".config", "grok-bridge", "config.json")
 LONG_TOKEN = re.compile(r"[A-Za-z0-9_\-\.]{24,}")
 MAX_BYTES = 60_000
+SKILL_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+REPO_URL = "https://github.com/francoCosimo95/claude-grok-bridge"
 OUTBOUND_TYPES = {"question", "request", "note"}
+
+
+def version():
+    try:
+        with open(os.path.join(SKILL_DIR, "VERSION")) as f:
+            return f.read().strip()
+    except OSError:
+        return "unknown"
+
+
+def latest_release():
+    try:
+        out = subprocess.run(["git", "ls-remote", "--tags", "--refs", REPO_URL], capture_output=True, text=True, timeout=8).stdout
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    tags = [line.rsplit("/v", 1)[-1] for line in out.splitlines() if "/v" in line]
+    tags = [t for t in tags if re.fullmatch(r"\d+\.\d+\.\d+", t)]
+    return max(tags, key=lambda t: tuple(map(int, t.split(".")))) if tags else None
 
 
 def fail(code, msg):
@@ -94,16 +116,23 @@ def main():
     ap.add_argument("--peer", default="cos")
     ap.add_argument("--check", action="store_true")
     ap.add_argument("--peers", action="store_true")
+    ap.add_argument("--version", action="store_true", help="print the installed version and the latest release")
     ap.add_argument("--envelope", help="path to the envelope JSON")
     ap.add_argument("--hello", action="store_true", help="send a self-test question that asks the agent to answer PONG")
     args = ap.parse_args()
 
+    if args.version:
+        latest = latest_release()
+        print(f"grok-bridge {version()} (protocol {PROTOCOL}); latest release: {latest or 'unknown'}")
+        if latest and latest != version():
+            print("UPDATE_AVAILABLE: send your Grok agent the setup line again, or run install.sh")
+        return
     if args.peers:
         list_peers()
         return
     url, auth, inbox, name = resolve(args.peer)
     if args.check:
-        print(f"CONFIG_OK peer={args.peer} name={name} inbox_routine={inbox or '<unset>'}")
+        print(f"CONFIG_OK peer={args.peer} name={name} inbox_routine={inbox or '<unset>'} version={version()}")
         return
     if args.hello:
         now = datetime.datetime.now(datetime.timezone.utc)
@@ -111,7 +140,7 @@ def main():
             "protocol": PROTOCOL,
             "type": "question",
             "id": "q-hello-" + now.strftime("%Y%m%d-%H%M%S"),
-            "from": {"kind": "claude-code", "label": "bridge self-test"},
+            "from": {"kind": "claude-code", "label": "bridge self-test", "version": version()},
             "to": args.peer,
             "subject": "Bridge self-test",
             "question": "Reply with the single word PONG.",
@@ -125,6 +154,8 @@ def main():
         ap.error("--envelope or --hello is required")
     if inbox:
         env.setdefault("reply_to", {}).setdefault("inbox_routine", inbox)
+    if isinstance(env.get("from"), dict):
+        env["from"].setdefault("version", version())
     raw = validate(env)
 
     req = urllib.request.Request(url, data=raw, method="POST", headers={"Content-Type": "application/json", "Authorization": auth})

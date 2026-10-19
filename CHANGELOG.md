@@ -1,0 +1,24 @@
+# Changelog
+
+All notable changes to this project. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+Versioning: [SemVer](https://semver.org/) for the kit. The wire protocol has its own version
+(`claude-grok-bridge/1`) and only changes when compatibility breaks.
+
+## [Unreleased]
+
+## [0.1.0] - 2026-10-19
+
+### Added
+- Protocol `claude-grok-bridge/1`: `question`, `request` (relayed from the owner with
+  `owner_words`), `note`, `answer`; statuses `answered`, `accepted`, `escalated`,
+  `needs_confirmation`, `done`, `declined`; trust rules.
+- Claude Code skill `grok-bridge` with `send_to_grok.py` (`--hello`, `--check`, `--peers`,
+  `--version`) and `add_peer.py` (hidden input or `--stdin`).
+- Claude inbox routine: logs every message, pushes answers into the asking cloud session as a
+  system notification, cleans up its one-off reminders.
+- Grok side: `reply_to_claude.py` (Claude CLI on the box, or routine API token),
+  `--discover` finds or creates the inbox and keeps its prompt in sync, optional stdio MCP
+  connector `claude-code`, routine prompt.
+- One-line setup and update: the Grok agent follows `grok/BOOTSTRAP.md`; `install.sh` fallback
+  for Macs without Grok local exec.
+- Release tooling: `VERSION`, this changelog, `scripts/release.sh`.
