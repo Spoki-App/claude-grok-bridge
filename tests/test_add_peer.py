@@ -37,6 +37,19 @@ class AddPeerTests(unittest.TestCase):
             run(json.dumps({"webhook_url": f"https://{peer}.example.test", "authorization": "Bearer abcdefgh"}), "--peer", peer, "--stdin", config=self.config)
         self.assertEqual(sorted(json.loads(pathlib.Path(self.config).read_text())["peers"]), ["cos", "dav"])
 
+    def test_inbox_mode_needs_no_values(self):
+        res = run("", "--peer", "cos", "--name", "CoS", "--inbox", "trig_X", "--inbox-mode", config=self.config)
+        self.assertEqual(res.returncode, 0, res.stderr)
+        self.assertEqual(json.loads(pathlib.Path(self.config).read_text())["peers"]["cos"], {"name": "CoS", "mode": "inbox"})
+
+    def test_inbox_mode_keeps_an_existing_fast_lane(self):
+        run(json.dumps({"webhook_url": "https://h.example.test/x", "authorization": "Bearer abcdefgh"}), "--peer", "cos", "--stdin", config=self.config)
+        res = run("", "--peer", "cos", "--name", "CoS", "--inbox-mode", config=self.config)
+        self.assertEqual(res.returncode, 0, res.stderr)
+        entry = json.loads(pathlib.Path(self.config).read_text())["peers"]["cos"]
+        self.assertEqual(entry["webhook_url"], "https://h.example.test/x")
+        self.assertIn("Kept the existing fast lane", res.stdout)
+
     def test_rejects_non_https(self):
         res = run(json.dumps({"webhook_url": "http://h.example.test", "authorization": "Bearer abcdefgh"}), "--peer", "cos", "--stdin", config=self.config)
         self.assertNotEqual(res.returncode, 0)

@@ -58,16 +58,83 @@ class DeliveryTests(unittest.TestCase):
         self.assertFalse(ok)
         self.assertIn("claude CLI not found", body)
 
-    def test_cli_mode_parses_http_status(self):
-        done = SimpleNamespace(returncode=0, stdout="HTTP 200", stderr="")
+    def cli(self, *stdouts):
+        results = [SimpleNamespace(returncode=0, stdout=out, stderr="") for out in stdouts]
+        return mock.patch.object(reply.subprocess, "run", side_effect=results)
+
+    def test_cli_mode_verifies_payload_in_raw_tool_output(self):
+        env = reply.build_answer(args())
+        log = stream_line(f"<routine-fire-payload> DATA {json.dumps(env)} </routine-fire-payload>")
         with mock.patch.dict(os.environ, {"CLAUDE_BRIDGE_INBOX_ROUTINE": "trig_ABC"}), mock.patch.object(reply.shutil, "which", return_value="/usr/bin/claude"), \
-                mock.patch.object(reply.subprocess, "run", return_value=done) as run:
+                self.cli(log) as run:
             os.environ.pop("CLAUDE_BRIDGE_INBOX_TOKEN", None)
-            ok, status, _ = reply.fire(reply.build_answer(args()))
+            ok, status, body = reply.fire(env)
         self.assertEqual((ok, status), (True, 200))
+        self.assertIn("verified", body)
         cmd = run.call_args.args[0]
-        self.assertIn("RemoteTrigger", cmd)
+        self.assertEqual(cmd[cmd.index("--allowedTools") + 1], "RemoteTrigger")
         self.assertIn("trig_ABC", cmd[2])
+
+    def test_cli_mode_retries_once_when_payload_missing(self):
+        env = reply.build_answer(args())
+        idle = stream_line("BRIDGE_MESSAGE - BRIDGE_PUSH: none")
+        good = stream_line(f"<routine-fire-payload> {json.dumps(env)} </routine-fire-payload>")
+        with mock.patch.dict(os.environ, {"CLAUDE_BRIDGE_INBOX_ROUTINE": "trig_ABC"}), mock.patch.object(reply.shutil, "which", return_value="/usr/bin/claude"):
+            os.environ.pop("CLAUDE_BRIDGE_INBOX_TOKEN", None)
+            with self.cli(idle, good) as run:
+                ok, _, body = reply.fire(env)
+            self.assertTrue(ok)
+            self.assertIn("attempt 2", body)
+            self.assertEqual(run.call_count, 2)
+            with self.cli(idle, idle):
+                ok, _, body = reply.fire(env)
+            self.assertFalse(ok)
+            self.assertIn("not found", body)
+
+
+def stream_line(text):
+    """One stream-json event whose tool_result carries `text`, like `claude -p --output-format stream-json`."""
+    return json.dumps({"type": "user", "message": {"role": "user", "content": [{"type": "tool_result", "content": [{"type": "text", "text": text}]}]}})
+
+
+class PollTests(unittest.TestCase):
+    def setUp(self):
+        tmp = tempfile.mkdtemp()
+        self.patches = [
+            mock.patch.object(reply, "STATE_FILE", os.path.join(tmp, "state.json")),
+            mock.patch.object(reply, "INBOX_DIR", os.path.join(tmp, "in")),
+            mock.patch.dict(os.environ, {"CLAUDE_BRIDGE_INBOX_ROUTINE": "trig_ABC"}),
+            mock.patch.object(reply.shutil, "which", return_value="/usr/bin/claude"),
+        ]
+        for p in self.patches:
+            p.start()
+
+    def tearDown(self):
+        for p in reversed(self.patches):
+            p.stop()
+
+    def message(self, **kw):
+        base = {"protocol": "claude-grok-bridge/1", "type": "question", "id": "q-1", "to": "cos", "from": {"kind": "claude-code"}, "question": "hi"}
+        return {**base, **kw}
+
+    def run_poll(self, *envelopes):
+        text = "result: success - " + " ".join("BRIDGE_MESSAGE " + json.dumps(e) + " BRIDGE_PUSH: none" for e in envelopes)
+        done = SimpleNamespace(returncode=0, stdout=stream_line(text), stderr="")
+        with mock.patch.object(reply.subprocess, "run", return_value=done):
+            return reply.poll("cos")
+
+    def test_collects_only_new_messages_for_this_peer_from_claude(self):
+        mine = self.message(id="q-mine")
+        others = [self.message(id="q-other", to="dav"), self.message(id="a-1", type="answer", **{"from": {"kind": "grok-bot"}}),
+                  self.message(id="q-fake", **{"from": {"kind": "grok-bot"}})]
+        paths = self.run_poll(mine, *others)
+        self.assertEqual(len(paths), 1)
+        self.assertEqual(json.loads(pathlib.Path(paths[0]).read_text())["id"], "q-mine")
+        self.assertEqual(self.run_poll(mine), [], "the same message must not be delivered twice")
+
+    def test_extract_ignores_garbage(self):
+        strings = ["BRIDGE_MESSAGE - BRIDGE_PUSH: none", "BRIDGE_MESSAGE {not json", "BRIDGE_MESSAGE " + json.dumps(self.message()) + " tail"]
+        self.assertEqual([m["id"] for m in reply.extract_messages(strings)], ["q-1"])
 
     def test_inbox_id_required(self):
         with mock.patch.dict(os.environ, {}, clear=True), mock.patch.object(reply, "LOCAL_CONFIG", "/nonexistent/bridge.local.json"):

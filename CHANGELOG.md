@@ -6,6 +6,22 @@ Versioning: [SemVer](https://semver.org/) for the kit. The wire protocol has its
 
 ## [Unreleased]
 
+### Added
+- **Zero-touch mode, now the default.** Claude Code sessions send through the inbox routine with
+  the login they already have; the agent collects its messages with a scheduled
+  `reply_to_claude.py --poll`. No webhook values to paste, and cloud sessions can send with no key.
+  The webhook stays as an optional fast lane.
+- `reply_to_claude.py --self-test`, `add_peer.py --inbox-mode` (keeps an existing fast lane).
+
+### Fixed
+- Answers sent through the Claude CLI could reach the inbox without their payload (seen once in
+  production). Delivery is now verified from the raw tool output and retried once.
+- The inbox pushes only messages from Grok agents, so a question from a cloud session is never
+  pushed back into the session that asked it.
+
+### Changed
+- The Claude CLI calls use `sonnet` by default (`CLAUDE_BRIDGE_CLI_MODEL` to override).
+
 ## [0.3.0] - 2026-10-19
 
 ### Added

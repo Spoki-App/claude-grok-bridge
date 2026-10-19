@@ -15,10 +15,12 @@ description: >-
 Grok Bot agents live outside Claude. This skill reaches them through each vendor's own
 automation endpoints, with no server in between:
 
-- **Out:** `scripts/send_to_grok.py` POSTs a JSON envelope to the agent's Grok Bot routine
-  webhook.
-- **Back:** the agent fires this account's Claude Code **inbox routine**. The inbox logs the
-  envelope and, for cloud sessions, pushes it into the asking session as a new turn.
+- **Out, zero-touch (default):** you run this account's Claude Code **inbox routine** with the
+  envelope, using the login this session already has; the agent collects it on its next poll.
+- **Out, fast lane (optional):** if the peer has a webhook configured, `scripts/send_to_grok.py`
+  POSTs the envelope straight to the agent's Grok Bot routine webhook (seconds instead of minutes).
+- **Back:** the agent runs the same inbox routine with its answer. The inbox logs it and, for
+  cloud sessions, pushes it into the asking session.
 
 Protocol details: `references/PROTOCOL.md`. Setup for a new account or agent:
 `references/SETUP.md`. Read them only when you need them.
@@ -37,8 +39,9 @@ Protocol details: `references/PROTOCOL.md`. Setup for a new account or agent:
 ## 0. Setup ("set up the grok bridge for <agent>")
 
 Setup is one line the user sends to their Grok Bot agent; the agent does everything else
-(creates the inbox routine through its Claude CLI, its own webhook routine, this machine's peer
-config through local exec, and a PONG self-test). Give the user this line to paste:
+(installs on its box, finds or creates the inbox routine through its Claude CLI, sets up its
+polling routine and plugin, configures this machine through local exec, runs a PONG self-test).
+Give the user this line to send:
 
 ```text
 Set up the Claude Code bridge: follow https://github.com/francoCosimo95/claude-grok-bridge/blob/main/grok/BOOTSTRAP.md
@@ -56,11 +59,12 @@ python3 -I ~/.claude/skills/grok-bridge/scripts/send_to_grok.py --peers
 python3 -I ~/.claude/skills/grok-bridge/scripts/send_to_grok.py --check --peer <peer>
 ```
 
-`--peers` lists configured agents and the inbox routine id. Default peer: `cos`. Once per
-session, also run `--version`: if it prints `UPDATE_AVAILABLE`, tell the user in one line that
-sending the setup line to their Grok agent again updates everything. On
-`CONFIG_MISSING` or `CONFIG_INSECURE`, stop and point the user to `references/SETUP.md`; never
-ask them to paste a webhook URL or key into the chat.
+`--peers` lists configured agents and the inbox routine id. Default peer: `cos`. `--check`
+prints the mode: `webhook` or `inbox` (zero-touch; also what you get on a machine or cloud
+session with no config at all). Once per session, also run `--version`: if it prints
+`UPDATE_AVAILABLE`, tell the user in one line that sending the setup line to their Grok agent
+again updates everything. On `CONFIG_INSECURE`, stop and show the `chmod` it prints. Never ask
+the user to paste a webhook URL or key into the chat.
 
 ## 2. Pick the message type
 
@@ -110,9 +114,22 @@ rules forbid):
 python3 -I ~/.claude/skills/grok-bridge/scripts/send_to_grok.py --peer <peer> --envelope <file>
 ```
 
-`HTTP 2xx` means the agent's routine accepted it. Note the printed `BODY`: if it ever contains a
-run id or an answer, tell the user. Tell the user in one line what you sent, to whom, and the
-envelope id.
+- **Webhook mode:** `HTTP 2xx` means the agent's routine accepted it.
+- **Inbox mode:** the script prints `SEND_VIA_INBOX routine=<id> id=<envelope id>` and an
+  `ENVELOPE {...}` line. Deliver it yourself:
+  1. Inbox id: the printed one; if it says to find it, list routines (`RemoteTrigger` `list`
+     locally, or `Claude_Code_Remote` `list_triggers` in a cloud session) and take the enabled
+     one named exactly "Grok bridge inbox".
+  2. Run it with the envelope JSON (everything after `ENVELOPE `) as the text: locally
+     `RemoteTrigger` `run` with body `{"text": "<envelope JSON>"}` (load the tool with
+     `ToolSearch` `select:RemoteTrigger` if it is deferred); in a cloud session
+     `Claude_Code_Remote` `fire_trigger` with that text.
+  3. Verify: `get_run_log` on the session the run returned must show a
+     `routine-fire-payload` containing your envelope id. If not, run it once more.
+  The agent picks it up on its next poll (a few minutes).
+
+Tell the user in one line what you sent, to whom, the envelope id, and roughly when to expect an
+answer (seconds in webhook mode, minutes in inbox mode).
 
 ## 5. Get the answer
 

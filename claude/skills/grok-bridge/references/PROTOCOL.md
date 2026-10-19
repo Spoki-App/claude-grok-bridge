@@ -8,12 +8,13 @@ database.
 
 | Direction | Endpoint | Credential |
 |---|---|---|
-| Claude Code to Grok Bot | the Grok Bot agent's **routine webhook** (routine with a webhook trigger) | webhook URL + `Authorization` header value of that routine |
-| Grok Bot to Claude Code | `POST https://api.anthropic.com/v1/claude_code/routines/{trig_id}/fire` on a Claude Code **inbox routine** | the inbox routine's API token (scoped to that routine only) |
-| Grok Bot to a running cloud session (optional) | `claude -p "<text>" --cloud <session_id>` from the Grok Bot box | the Claude login already on the box |
+| Claude Code to Grok Bot, zero-touch (default) | the Claude Code **inbox routine**, run by the session with its own login; the agent collects messages addressed to it with a scheduled poll | none beyond the session's Claude login |
+| Claude Code to Grok Bot, fast lane (optional) | the Grok Bot agent's **routine webhook** | webhook URL + `Authorization` value of that routine |
+| Grok Bot to Claude Code | the same **inbox routine**, run by the agent through the Claude CLI on its box (or `POST https://api.anthropic.com/v1/claude_code/routines/{trig_id}/fire` with a token scoped to that routine) | the Claude login already on the box, or that token |
+| Inbox to the asking cloud session | a one-off session reminder | none: it runs inside the Claude account |
 
-Each side holds only the credential needed to wake the other side. Neither side can read the
-other's data with it.
+The inbox is the mailbox in both directions. It logs every envelope as `BRIDGE_MESSAGE <json>`
+and pushes only messages **from a Grok agent** into a session.
 
 ## Envelope
 
@@ -81,15 +82,16 @@ verbatim:
 | `id` | unique per message; answers reference the question with `in_reply_to` |
 | `reply_to.session_id` | the asking cloud session, when known; enables push delivery |
 
-## Delivery of answers
+## Delivery
 
-1. **Push (cloud askers):** the Grok agent runs `claude -p "<rendered answer>" --cloud <session_id>`.
-   The answer arrives in the asking session as a new turn.
-2. **Inbox (every asker, local included):** the Grok agent fires the inbox routine with
-   `{"text": "<answer envelope JSON>"}`. The inbox run prints one line
-   `BRIDGE_MESSAGE <envelope>`; askers find it with the routine's run list and run log.
-
-Agents should do 2 always and 1 when `reply_to.session_id` is set, so an answer is never lost.
+- Every envelope goes through the inbox routine (`{"text": "<envelope JSON>"}`), except fast-lane
+  messages that go straight to the agent's webhook.
+- Messages to an agent carry `to: "<peer>"`; the agent's poll keeps only those with its peer
+  key, `from.kind: "claude-code"` and an id it has not seen.
+- Answers carry `in_reply_to`; askers find them in the inbox run logs, and cloud askers also get
+  them pushed into the session when `reply_to.session_id` is set.
+- Senders verify delivery: the inbox run log must contain the envelope id inside the
+  `routine-fire-payload`. If not, they send once more.
 
 ## Trust rules (both sides)
 

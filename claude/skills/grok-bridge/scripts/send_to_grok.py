@@ -15,7 +15,11 @@ Config, first match wins:
          "peers": {"cos": {"name": "CoS", "webhook_url": "https://...", "authorization": "Bearer ..."}}}
 
 The webhook URL and Authorization value are secrets: this script never prints them.
-Exit codes: 0 delivered, 2 config problem, 3 HTTP or network error, 4 invalid envelope.
+Modes: "webhook" (peer has a webhook URL and key: POSTed directly, fastest) or "inbox" (zero-touch:
+the script validates the envelope and prints SEND_VIA_INBOX + ENVELOPE lines; the Claude session
+then runs the inbox routine with that text, and the agent collects it on its next poll).
+
+Exit codes: 0 delivered or ready for the inbox, 2 config problem, 3 HTTP or network error, 4 invalid envelope.
 """
 
 import argparse
@@ -84,9 +88,8 @@ def resolve(peer):
     url, auth = url or entry.get("webhook_url", ""), auth or entry.get("authorization", "")
     auth = re.sub(r"(?i)^\s*authorization\s*:\s*", "", auth).strip()
     inbox = os.environ.get("GROK_BRIDGE_INBOX_ROUTINE") or cfg.get("inbox_routine", "")
-    if not url.startswith("https://") or not auth:
-        fail(2, f"CONFIG_MISSING: no webhook for peer '{peer}' in env GROK_BRIDGE_{key}_URL/_AUTH or {path}")
-    return url, auth, inbox, entry.get("name", peer)
+    mode = "webhook" if url.startswith("https://") and auth else "inbox"
+    return {"mode": mode, "url": url, "auth": auth, "inbox": inbox, "name": entry.get("name", peer), "configured": bool(entry) or mode == "webhook"}
 
 
 def list_peers():
@@ -131,9 +134,11 @@ def main():
     if args.peers:
         list_peers()
         return
-    url, auth, inbox, name = resolve(args.peer)
+    peer = resolve(args.peer)
+    url, auth, inbox = peer["url"], peer["auth"], peer["inbox"]
     if args.check:
-        print(f"CONFIG_OK peer={args.peer} name={name} inbox_routine={inbox or '<unset>'} version={version()}")
+        note = "" if peer["configured"] else " (peer not configured on this machine: messages go through the inbox)"
+        print(f"CONFIG_OK peer={args.peer} name={peer['name']} mode={peer['mode']} inbox_routine={inbox or '<find by name>'} version={version()}{note}")
         return
     if args.hello:
         now = datetime.datetime.now(datetime.timezone.utc)
@@ -153,11 +158,17 @@ def main():
             env = json.load(f)
     else:
         ap.error("--envelope or --hello is required")
+    env.setdefault("to", args.peer)
     if inbox:
         env.setdefault("reply_to", {}).setdefault("inbox_routine", inbox)
     if isinstance(env.get("from"), dict):
         env["from"].setdefault("version", version())
     raw = validate(env)
+
+    if peer["mode"] == "inbox":
+        print(f"SEND_VIA_INBOX routine={inbox or '<find the routine named Grok bridge inbox>'} id={env['id']}")
+        print("ENVELOPE " + json.dumps(env, ensure_ascii=False, separators=(",", ":")))
+        return
 
     req = urllib.request.Request(url, data=raw, method="POST", headers={"Content-Type": "application/json", "Authorization": auth})
     try:

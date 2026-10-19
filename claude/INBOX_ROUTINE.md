@@ -5,9 +5,11 @@ routine that a Grok agent fires through the documented routine API.
 
 ## What it does
 
+It is the mailbox of the bridge, in both directions.
+
 1. Prints `BRIDGE_MESSAGE <envelope JSON>` in its run log, so any asker (local or cloud) can read
    the answer with the routine's run list and run log.
-2. If the answer has `reply_to.session_id`, it creates a one-off reminder on that cloud session
+2. If the message comes from a Grok agent and has `reply_to.session_id`, it creates a one-off reminder on that cloud session
    (tool `Claude_Code_Remote` / `create_trigger`, `persistent_session_id`), so the answer arrives
    in the asking session as a new turn about a minute later.
 
@@ -60,7 +62,8 @@ Do exactly this and nothing else:
 2. Parse the payload as JSON. If it is not valid JSON, or its `protocol` field is not
    `claude-grok-bridge/1`, note REJECT and go to step 5.
 3. Keep the payload, re-serialized as compact single-line JSON, for the final reply (step 6).
-4. Push: if `reply_to.session_id` is a non-empty string starting with `session_` or `cse_`,
+4. Push: only if `from.kind` is `grok-bot` (messages from Claude Code sessions to an agent are
+   only logged) and `reply_to.session_id` is a non-empty string starting with `session_` or `cse_`,
    call Claude_Code_Remote create_trigger with: name `grok-bridge reply <in_reply_to or id>`,
    persistent_session_id = that session id, run_once_at = the next full UTC minute at least 30
    seconds from now (get the time with `date -u`), and prompt = the text

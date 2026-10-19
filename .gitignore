@@ -4,3 +4,4 @@ __pycache__/
 .DS_Store
 config.json
 grok/bridge.local.json
+grok/bridge.state.json

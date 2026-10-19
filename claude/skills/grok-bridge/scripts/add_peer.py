@@ -55,6 +55,7 @@ def main():
     ap.add_argument("--name", help="display name, e.g. CoS")
     ap.add_argument("--inbox", help="Claude inbox routine id (trig_...)")
     ap.add_argument("--stdin", action="store_true", help='read {"webhook_url", "authorization"} JSON from stdin (for agents)')
+    ap.add_argument("--inbox-mode", action="store_true", help="zero-touch: no webhook values, messages go through the inbox")
     args = ap.parse_args()
     name = args.name or args.peer
 
@@ -67,7 +68,9 @@ def main():
         with open(path) as f:
             cfg = json.load(f)
 
-    if args.stdin:
+    if args.inbox_mode:
+        url = auth = None
+    elif args.stdin:
         data = json.load(sys.stdin)
         url, auth = data.get("webhook_url", "").strip(), clean_auth(data.get("authorization", ""))
         if not url.startswith("https://") or not auth:
@@ -75,7 +78,15 @@ def main():
     else:
         url, auth = guided(name)
 
-    cfg.setdefault("peers", {})[args.peer] = {"name": name, "webhook_url": url, "authorization": auth}
+    existing = (cfg.get("peers") or {}).get(args.peer) or {}
+    if args.inbox_mode and existing.get("webhook_url"):
+        entry = {**existing, "name": name}
+        print(f"Kept the existing fast lane (webhook) for '{args.peer}'.")
+    elif args.inbox_mode:
+        entry = {"name": name, "mode": "inbox"}
+    else:
+        entry = {"name": name, "webhook_url": url, "authorization": auth}
+    cfg.setdefault("peers", {})[args.peer] = entry
     if args.inbox:
         cfg["inbox_routine"] = args.inbox
 
@@ -84,7 +95,7 @@ def main():
         json.dump(cfg, f, indent=2)
     os.chmod(path, 0o600)
     print(f"Saved '{args.peer}' to {path} (only you can read it).")
-    if not args.stdin:
+    if not args.stdin and not args.inbox_mode:
         print(f"""
 {GREEN}{BOLD}+------------------------------------------------------------+
 |  NEXT STEP: go back to {name}'s chat in Grok Bot and write "done".
