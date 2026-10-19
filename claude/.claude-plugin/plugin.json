@@ -1,0 +1,10 @@
+{
+  "name": "grok-bridge",
+  "version": "0.6.0",
+  "description": "Talk to your Grok Bot agents from Claude Code: ask, tell, note, and get answers back in the session.",
+  "author": {"name": "Cosimo Franco", "url": "https://github.com/francoCosimo95"},
+  "homepage": "https://github.com/francoCosimo95/claude-grok-bridge",
+  "repository": "https://github.com/francoCosimo95/claude-grok-bridge",
+  "license": "MIT",
+  "keywords": ["grok", "agents", "bridge", "chief-of-staff"]
+}

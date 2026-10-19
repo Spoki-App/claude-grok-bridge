@@ -121,6 +121,11 @@ class SendTests(Base):
         for secret in ("secret-path", "supersecret", "abcdefabcdef"):
             self.assertNotIn(secret, out)
 
+    def test_thread_flag(self):
+        self.config({"peers": {"cos": {"mode": "inbox"}}})
+        code, out = run("ask", "And tomorrow?", "--to", "cos", "--thread", "q-20261019-1036-aa5b")
+        self.assertEqual(sent(out)["thread"], "q-20261019-1036-aa5b")
+
     def test_bad_ref_is_a_clear_error(self):
         self.config({"peers": {"cos": {"mode": "inbox"}}})
         code, out = run("note", "x", "--to", "cos", "--ref", "no-equals-sign")

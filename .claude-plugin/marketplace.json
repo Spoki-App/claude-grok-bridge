@@ -1,0 +1,12 @@
+{
+  "name": "claude-grok-bridge",
+  "owner": {"name": "Cosimo Franco", "url": "https://github.com/francoCosimo95"},
+  "metadata": {"description": "Claude Code and Grok Bot agents, talking natively."},
+  "plugins": [
+    {
+      "name": "grok-bridge",
+      "source": "./claude",
+      "description": "Talk to your Grok Bot agents from Claude Code: ask, tell, note, and get answers back in the session."
+    }
+  ]
+}

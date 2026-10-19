@@ -6,6 +6,21 @@ Versioning: [SemVer](https://semver.org/) for the kit. The wire protocol has its
 
 ## [Unreleased]
 
+### Added
+- **Native Claude Code plugin** `grok-bridge`: the repo is a Claude Code marketplace
+  (`/plugin install grok-bridge --marketplace francoCosimo95/claude-grok-bridge`). Cloud sessions
+  get it through the repository's `.claude/settings.json`, no files to copy. Validated with
+  `claude plugin validate --strict`.
+- **Threads.** Optional `thread` field (id of the first message): `ask/tell/note --thread <id>`;
+  answers keep it; the agent archives messages both ways and reads `bridge.py thread <id>` before
+  answering a follow-up.
+- **Any agent platform.** The inbox pushes answers from any `from.kind` other than `claude-code`;
+  `CLAUDE_BRIDGE_AGENT_KIND` names the agent's platform (default `grok-bot`).
+
+### Changed
+- The skill finds `bridge.py` next to its own SKILL.md, so it works as a plugin, a linked skill or
+  a repo skill.
+
 ## [0.6.0] - 2026-10-19
 
 Fixes from an independent review (Fable), checked against the five pillars.

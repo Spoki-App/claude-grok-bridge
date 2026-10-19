@@ -13,7 +13,7 @@ automation endpoints. No relay server, no queue, no shared database.
 | Inbox → asking cloud session | a one-off session reminder | none, inside the Claude account |
 
 The inbox logs every message as `BRIDGE_MESSAGE <envelope>` and pushes only messages **from an
-agent** into a session. Senders verify delivery: the run log must hold the envelope id inside
+agent** (any `from.kind` other than `claude-code`) into a session. Senders verify delivery: the run log must hold the envelope id inside
 the `routine-fire-payload`; if not, they send once more.
 
 ## Envelope
@@ -62,6 +62,8 @@ Its answer:
 | `status` | `answered`, `accepted`, `escalated`, `needs_confirmation`, `done`, `declined` |
 | `reply_to.session_id` | the asking cloud session, so the answer is pushed into it |
 | `from.version` | the sender's kit version |
+| `from.kind` | `claude-code`, or the agent's platform (`grok-bot` today; any other value for other platforms) |
+| `thread` | optional: the id of the first message of a conversation; replies keep it |
 
 New optional fields are allowed within `/1`; readers ignore what they do not know. Anything an
 older peer would misread needs `/2`.

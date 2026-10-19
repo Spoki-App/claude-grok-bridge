@@ -20,6 +20,7 @@ pathlib.Path("VERSION").write_text(new + "\n")
 sub("CHANGELOG.md", r"## \[Unreleased\]\n", f"## [Unreleased]\n\n## [{new}] - {today}\n")
 sub("claude/inbox.md", r"claude-grok-bridge inbox v\d+\.\d+\.\d+", f"claude-grok-bridge inbox v{new}")
 sub("grok/plugin/.cursor-plugin/plugin.json", r'"version": "\d+\.\d+\.\d+"', f'"version": "{new}"')
+sub("claude/.claude-plugin/plugin.json", r'"version": "\d+\.\d+\.\d+"', f'"version": "{new}"')
 PY
 ./scripts/sync.sh
 git add -A && git commit -q -m "chore(release): v$NEW" && git tag -a "v$NEW" -m "v$NEW"

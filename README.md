@@ -103,8 +103,11 @@ Your agent follows [`grok/BOOTSTRAP.md`](grok/BOOTSTRAP.md) and keeps you posted
   `curl -fsSL https://github.com/francoCosimo95/claude-grok-bridge/releases/latest/download/install.sh | sh -s -- <peer> --name <Agent> --inbox <trig id> --inbox-mode`
 - **Fast lane (optional).** If the agent can read its webhook routine's key, it stores it on
   your Mac (`chmod 600`) and messages reach it in about a second instead of its poll interval.
-- **Cloud sessions** need only the skill (in the repo's `.claude/skills/`): they send through
-  the inbox with their own login and get answers pushed back. No keys in the environment.
+- **Claude Code plugin.** The agent installs the skill for you; you can also install it yourself:
+  `/plugin install grok-bridge --marketplace francoCosimo95/claude-grok-bridge`
+- **Cloud sessions** need the plugin enabled for the repository. Add to its `.claude/settings.json`:
+  `{"extraKnownMarketplaces": {"claude-grok-bridge": {"source": {"source": "github", "repo": "francoCosimo95/claude-grok-bridge"}}}, "enabledPlugins": {"grok-bridge@claude-grok-bridge": true}}`.
+  They send through the inbox with their own login and get answers pushed back. No keys.
 - **No Claude CLI at all on the agent's box:** give it a token scoped to the inbox routine
   (claude.ai/code/routines, Edit, Add trigger, API) as `CLAUDE_BRIDGE_INBOX_TOKEN`.
 </details>
@@ -137,6 +140,9 @@ answers through it; answers are pushed into the session that asked. Messages fol
 | `ask` | `question`: a decision or context the agent owns | `answered`, or `escalated` while it asks you |
 | `tell` | `request`: a task **you typed**, with your exact words | `accepted` then `done`, or `needs_confirmation` |
 | `note` | `note`: FYI, either direction | nothing |
+
+Follow-ups stay in one conversation: `ask CoS ... --thread <first id>`, and the agent reads the
+thread before it answers.
 
 ## Security
 
@@ -189,7 +195,10 @@ Tasks flow the other way: you tell Claude, Claude relays your words.
 
 <details><summary><b>Other agent platforms?</b></summary>
 
-The protocol is plain JSON. Grok Bot is the first peer; adapters are welcome.
+Any agent that can run a shell command, has a scheduled routine, and has the Claude CLI signed
+in (or an inbox token) can be a peer: point it at `grok/BOOTSTRAP.md`, skip the Grok-only plugin
+step, and set `CLAUDE_BRIDGE_AGENT_KIND` to its platform name. The protocol is plain JSON, and
+the inbox pushes answers from any agent kind. Grok Bot is the first verified peer.
 </details>
 
 ## Roadmap
@@ -197,9 +206,10 @@ The protocol is plain JSON. Grok Bot is the first peer; adapters are welcome.
 - [x] Two-way messaging, push into the asking session, one-line setup and update
 - [x] Grok Bot plugin "Claude Code" (connector + skill)
 - [x] Zero-touch sending, no keys anywhere (verification in progress)
-- [ ] Native Claude Code plugin (`/plugin install grok-bridge`)
-- [ ] Threads: multi-turn conversations on one id
-- [ ] More peers beyond Grok Bot
+- [x] Native Claude Code plugin (`/plugin install grok-bridge`), cloud sessions via project settings
+- [x] Threads: multi-turn conversations on one id
+- [x] Platform-neutral agent side (any agent with a shell, a schedule and the Claude CLI)
+- [ ] A second verified agent platform
 
 Ideas: [Discussions](https://github.com/francoCosimo95/claude-grok-bridge/discussions).
 Contributing: [CONTRIBUTING.md](CONTRIBUTING.md) (layout, tests, the five pillars).

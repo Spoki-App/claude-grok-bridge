@@ -46,6 +46,14 @@ class AnswerTests(Base):
         self.assertEqual(env["reply_to"], {"session_id": "cse_1"})
         self.assertEqual(env["from"], {"kind": "grok-bot", "agent": "CoS", "version": bridge.version()})
 
+    def test_answers_keep_the_thread(self):
+        self.assertEqual(bridge.answer(QUESTION, "CoS", "x")["thread"], "q-1", "a first message starts its thread")
+        self.assertEqual(bridge.answer({**QUESTION, "id": "q-2", "thread": "q-1"}, "CoS", "x")["thread"], "q-1")
+
+    def test_agent_kind_is_configurable(self):
+        with mock.patch.object(bridge, "AGENT_KIND", "other-agent"):
+            self.assertEqual(bridge.answer(QUESTION, "Ava", "x")["from"]["kind"], "other-agent")
+
     def test_rejects_empty_or_unknown_status(self):
         for text, status in (("", "answered"), ("x", "maybe")):
             with self.assertRaises(SystemExit):
@@ -140,6 +148,23 @@ class PollTests(Base):
     def test_extract_ignores_garbage(self):
         strings = ["BRIDGE_MESSAGE - x", 'BRIDGE_MESSAGE {"protocol": "claude-grok-bridge/1", broken', "BRIDGE_MESSAGE " + json.dumps(QUESTION) + " tail"]
         self.assertEqual([m["id"] for m in bridge.extract_messages(strings)], ["q-1"])
+
+
+class ThreadTests(Base):
+    def test_thread_lists_both_directions_oldest_first(self):
+        first = {**QUESTION, "sent_at": "2026-10-19T10:00:00Z"}
+        follow = {**QUESTION, "id": "q-2", "thread": "q-1", "sent_at": "2026-10-19T10:05:00Z"}
+        other = {**QUESTION, "id": "q-9", "sent_at": "2026-10-19T10:01:00Z"}
+        for env in (follow, other, first):
+            bridge.archive(env)
+        reply = bridge.answer(first, "CoS", "PONG")
+        token = {"CLAUDE_BRIDGE_INBOX_TOKEN": "sk-ant-oat01-x"}
+        with mock.patch.dict(os.environ, token), mock.patch.object(bridge.urllib.request, "urlopen", Recorder()):
+            self.assertTrue(bridge.deliver(reply)["delivered"])
+        ids = [e["id"] for e in bridge.thread("q-1")]
+        self.assertEqual(ids[0], "q-1")
+        self.assertEqual(set(ids), {"q-1", "q-2", reply["id"]})
+        self.assertNotIn("q-9", ids)
 
 
 class SetupTests(Base):

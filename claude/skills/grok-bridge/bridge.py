@@ -4,6 +4,7 @@
   bridge.py ask   "Merge develop now?" [--to cos] [--context ...] [--option "A) ..."] [--recommend ...] [--ref pr=URL]
   bridge.py tell  "Move card 1234 to review" --owner-words "the user's exact words" [--to cos] [--context ...]
   bridge.py note  "PR 42 is merged" [--to cos]
+  (any of them with --thread <first message id> continues a conversation)
   bridge.py hello [--to cos]                      self-test: asks the agent for PONG
   bridge.py send  envelope.json [--to cos]        send a prepared envelope
   bridge.py check [--to cos] | peers | version
@@ -127,7 +128,7 @@ def envelope(kind, text, peer, args=None):
         "sent_at": now(),
     }
     if args is not None:
-        for field in ("subject", "context", "recommendation"):
+        for field in ("subject", "context", "recommendation", "thread"):
             if getattr(args, field, None):
                 env[field] = getattr(args, field)
         if getattr(args, "option", None):
@@ -308,6 +309,7 @@ def main():
         p.add_argument("--recommend", dest="recommendation")
         p.add_argument("--ref", action="append", help="key=value, e.g. pr=https://...")
         p.add_argument("--label")
+        p.add_argument("--thread", help="id of the first message, to continue a conversation")
         if kind == "request":
             p.add_argument("--owner-words", required=True)
         p.set_defaults(func=lambda a, k=kind: cmd_message(a, k))

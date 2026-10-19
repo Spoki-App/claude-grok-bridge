@@ -27,7 +27,8 @@ class RepoConsistencyTests(unittest.TestCase):
     def test_versions_agree(self):
         version = (ROOT / "VERSION").read_text().strip()
         self.assertRegex(version, r"^\d+\.\d+\.\d+$")
-        self.assertEqual(json.loads((ROOT / "grok/plugin/.cursor-plugin/plugin.json").read_text())["version"], version)
+        for manifest in ("grok/plugin/.cursor-plugin/plugin.json", "claude/.claude-plugin/plugin.json"):
+            self.assertEqual(json.loads((ROOT / manifest).read_text())["version"], version, manifest)
         self.assertIn(f"claude-grok-bridge inbox v{version}.", (ROOT / "claude/inbox.md").read_text())
         self.assertIn(f"## [{version}]", (ROOT / "CHANGELOG.md").read_text())
 

@@ -7,6 +7,7 @@
   bridge.py reply ENVELOPE_FILE --agent CoS --text "..." [--status answered]
   bridge.py note SESSION_ID --agent CoS --text "..."      message a Claude Code cloud session
   bridge.py self-test --peer cos          drop a PONG question for yourself in the inbox
+  bridge.py thread ID                     the saved messages of a conversation, oldest first
 
 Everything goes through the owner's Claude inbox routine, run with the Claude CLI signed in on this
 box (or with CLAUDE_BRIDGE_INBOX_TOKEN, a token scoped to that routine). Deliveries are verified
@@ -41,6 +42,7 @@ FIRE_URL = "https://api.anthropic.com/v1/claude_code/routines/{routine}/fire"
 INBOX_NAME = "claude-grok-bridge inbox"
 MAX_TEXT = 60_000
 TOKENISH = re.compile(r"sk-ant-[A-Za-z0-9_\-]+")
+AGENT_KIND = os.environ.get("CLAUDE_BRIDGE_AGENT_KIND", "grok-bot")
 
 RUN_PROMPT = (
     'Use the RemoteTrigger tool: action "run", trigger_id "{routine}", body {{"text": T}} where T is the JSON '
@@ -207,14 +209,38 @@ def deliver(env):
         sys.exit(f"envelope too large ({len(text)} chars, max {MAX_TEXT})")
     routine, token = inbox_routine(), os.environ.get("CLAUDE_BRIDGE_INBOX_TOKEN")
     ok, detail = fire_with_token(routine, token, text) if token else fire_with_cli(routine, text)
+    if ok:
+        archive(env)
     return {"delivered": ok, "id": env["id"], "detail": detail}
+
+
+def archive(env):
+    os.makedirs(INBOX_DIR, mode=0o700, exist_ok=True)
+    path = os.path.join(INBOX_DIR, re.sub(r"[^A-Za-z0-9_.-]", "_", env["id"]) + ".json")
+    with open(path, "w") as f:
+        json.dump(env, f)
+    return path
+
+
+def thread(thread_id):
+    """Every saved message of a conversation (in and out), oldest first."""
+    found = []
+    for name in os.listdir(INBOX_DIR) if os.path.isdir(INBOX_DIR) else []:
+        try:
+            with open(os.path.join(INBOX_DIR, name)) as f:
+                env = json.load(f)
+        except (OSError, ValueError):
+            continue
+        if thread_id in (env.get("thread"), env.get("id")):
+            found.append(env)
+    return sorted(found, key=lambda e: e.get("sent_at", ""))
 
 
 def outbound(kind, agent, body_field, body, session_id, **extra):
     stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d-%H%M%S")
     return {
         "protocol": PROTOCOL, "type": kind, "id": f"{kind[0]}-{stamp}-{secrets.token_hex(2)}",
-        "from": {"kind": "grok-bot", "agent": agent, "version": version()},
+        "from": {"kind": AGENT_KIND, "agent": agent, "version": version()},
         body_field: body, **extra, "reply_to": {"session_id": session_id or None}, "sent_at": now(),
     }
 
@@ -225,7 +251,8 @@ def answer(question, agent, text, status="answered"):
     if not text:
         sys.exit("empty answer")
     session = (question.get("reply_to") or {}).get("session_id")
-    return outbound("answer", agent, "answer", text, session, in_reply_to=question["id"], status=status)
+    thread = question.get("thread") or question["id"]
+    return outbound("answer", agent, "answer", text, session, in_reply_to=question["id"], status=status, thread=thread)
 
 
 # ---------- poll ----------
@@ -257,14 +284,10 @@ def poll(peer):
     if not ok:
         sys.exit(f"poll failed: {result}")
     seen, paths = list(state["seen"]), []
-    os.makedirs(INBOX_DIR, mode=0o700, exist_ok=True)
     for env in extract_messages(strings):
         for_me = str(env.get("to", "")).lower() == peer.lower() and (env.get("from") or {}).get("kind") == "claude-code"
         if for_me and env.get("type") in ("question", "request", "note") and env["id"] not in seen:
-            path = os.path.join(INBOX_DIR, re.sub(r"[^A-Za-z0-9_.-]", "_", env["id"]) + ".json")
-            with open(path, "w") as f:
-                json.dump(env, f)
-            paths.append(path)
+            paths.append(archive(env))
             seen.append(env["id"])
     complete = result.strip().lower().startswith("done")
     since = (started - OVERLAP).strftime("%Y-%m-%dT%H:%M:%SZ") if complete else state["since"]
@@ -330,6 +353,8 @@ def main():
     p.add_argument("--text", required=True)
     p = sub.add_parser("self-test")
     p.add_argument("--peer", required=True)
+    p = sub.add_parser("thread")
+    p.add_argument("thread_id")
     args = ap.parse_args()
 
     if args.cmd == "setup":
@@ -340,6 +365,8 @@ def main():
         print(f"claude-grok-bridge {version()} (protocol {PROTOCOL})")
     elif args.cmd == "poll":
         print(json.dumps(poll(args.peer)))
+    elif args.cmd == "thread":
+        print(json.dumps(thread(args.thread_id), ensure_ascii=False, indent=1))
     else:
         if args.cmd == "reply":
             with open(args.envelope) as f:
