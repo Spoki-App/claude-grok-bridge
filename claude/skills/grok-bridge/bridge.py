@@ -133,6 +133,9 @@ def envelope(kind, text, peer, args=None):
         if getattr(args, "option", None):
             env["options"] = args.option
         if getattr(args, "ref", None):
+            bad = [item for item in args.ref if "=" not in item]
+            if bad:
+                fail(4, f"--ref needs key=value, got {bad}")
             env["refs"] = dict(item.split("=", 1) for item in args.ref)
         if getattr(args, "owner_words", None):
             env["on_behalf_of"], env["owner_words"] = "owner", args.owner_words
@@ -171,8 +174,10 @@ def deliver(env, target):
         env.setdefault("reply_to", {}).setdefault("inbox_routine", target["inbox"])
     raw = validate(env)
     if target["mode"] == "inbox":
-        print(f"SEND_VIA_INBOX routine={target['inbox'] or 'FIND:claude-grok-bridge inbox'} id={env['id']}")
-        print("ENVELOPE " + raw)
+        cloud = bool(os.environ.get("CLAUDE_CODE_REMOTE_SESSION_ID"))
+        tool = "Claude_Code_Remote fire_trigger" if cloud else "RemoteTrigger run"
+        print(f"SEND_VIA_INBOX routine={target['inbox'] or 'FIND:claude-grok-bridge inbox'} id={env['id']} via={tool}")
+        print("BODY " + json.dumps({"text": raw}, ensure_ascii=False))
         return
     url, auth = target["url"], target["auth"]
     req = urllib.request.Request(url, data=raw.encode(), method="POST", headers={"Content-Type": "application/json", "Authorization": auth})

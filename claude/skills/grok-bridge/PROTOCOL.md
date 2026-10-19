@@ -77,3 +77,9 @@ older peer would misread needs `/2`.
 - No secrets, tokens or personal data in envelopes.
 - Pushed answers start with `[grok-bridge reply <id>] [<agent>]` and arrive marked as not user
   input.
+
+Known limits, by design:
+- Whoever can run the inbox can target any cloud session id and send any `owner_words`. That is
+  the account owner and their own agents; the banner above and `needs_confirmation` are the
+  backstop, not a signature.
+- `from.label` tells the agent the repository and branch of the asking session.

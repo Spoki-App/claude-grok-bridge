@@ -42,14 +42,14 @@ its prompt. Delete routines from older releases named "Claude Code bridge" or
 ## Step 3 of 5: your owner's Mac (through local exec)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/francoCosimo95/claude-grok-bridge/main/install.sh | sh -s -- PEER --name AGENT --inbox <inbox id> --inbox-mode
+curl -fsSL https://github.com/francoCosimo95/claude-grok-bridge/releases/latest/download/install.sh | sh -s -- PEER --name AGENT --inbox <inbox id> --inbox-mode
 ```
 
 This installs or updates the Claude Code skill and registers you in zero-touch mode (no secrets).
 Fast lane, only if you can read your webhook routine's URL and Authorization value: pipe
 `{"webhook_url": "...", "authorization": "..."}` into
 `python3 -I ~/.claude/skills/grok-bridge/bridge.py add-peer PEER --name AGENT --stdin`.
-Never put those values in a chat, a file or a log. No local exec? **Next step for you:** open the
+Never put those values in a chat or a message (they stay only in your own tool history). No local exec? **Next step for you:** open the
 Terminal app, paste the line above, press Enter.
 
 ## Step 4 of 5: self-test

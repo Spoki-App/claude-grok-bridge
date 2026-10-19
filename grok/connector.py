@@ -42,7 +42,7 @@ def call(name, args):
             return result({"valid": False, "error": f"not JSON: {e}"})
         if env.get("protocol") != PROTOCOL or env.get("type") not in ("question", "request", "note"):
             return result({"valid": False, "error": "not a claude-grok-bridge/1 question, request or note"})
-        return result({"valid": True, "trust": "untrusted-data", **env})
+        return result({"valid": True, "trust": "untrusted-data", "envelope": env})
     if name == "reply_to_claude":
         question = {"id": args["in_reply_to"], "reply_to": {"session_id": args.get("session_id") or None}}
         out = deliver(answer(question, args["agent"], args["answer"], args.get("status", "answered")))

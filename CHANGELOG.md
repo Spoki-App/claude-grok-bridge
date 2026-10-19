@@ -6,6 +6,36 @@ Versioning: [SemVer](https://semver.org/) for the kit. The wire protocol has its
 
 ## [Unreleased]
 
+Fixes from an independent review (Fable), checked against the five pillars.
+
+### Fixed
+- **No lost messages in poll.** It now also reads the fire payload (so a run still executing is
+  not missed), keeps a 10 minute overlap (ids dedupe), and only advances when the poll completed.
+- **No duplicate deliveries.** When the payload is not yet in the log, the same run is read
+  again before firing a second time.
+- **Connector trust label** can no longer be overridden by the envelope (`read_envelope` nests it).
+- The inbox **cleanup never deletes a reminder that has not fired** yet.
+- `setup` accepts only a reply that is exactly one routine id.
+- `install.sh`: `--stdin` works through the pipe, and a real folder in place of the skill is
+  reported instead of a green "OK".
+- `--ref` without `=` is a clear error, not a traceback. The CLI never waits on stdin.
+
+### Security
+- **Least privilege for the models in the loop.** Every Claude CLI call is audited from its
+  transcript: any RemoteTrigger action outside the expected ones (poll: list and read only) fails
+  the call with an alert.
+- **The inbox has no shell.** It keeps one harmless tool and denies the rest explicitly (an empty
+  allowed list would mean the default set, shell included). It reads the time from its system
+  reminder.
+- **Installs come from the release**, not `main`: `install.sh` is a release asset, fetched from
+  `releases/latest/download/install.sh`.
+- Envelopes poll into a private folder next to the install, not shared `/tmp`.
+
+### Changed
+- In zero-touch mode the Claude side prints a ready `BODY {"text": ...}` and the tool to use
+  (`via=`), so the session does not hand-escape JSON.
+- README: use cases as short chats; PROTOCOL documents the known limits.
+
 ## [0.5.0] - 2026-10-19
 
 Rebuilt around five pillars: easy, compact, clear, safe, fast. **Breaking for installs**: send

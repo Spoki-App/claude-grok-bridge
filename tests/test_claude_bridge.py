@@ -17,6 +17,12 @@ URL = "https://hooks.example.test/secret-path-abcdefghijklmnopqrstuvwxyz"
 AUTH = "Bearer crsr_supersecretvalue1234567890"
 
 
+def sent(out):
+    """The envelope inside the BODY line the session passes to the inbox routine."""
+    body = json.loads(next(line for line in out.splitlines() if line.startswith("BODY "))[len("BODY "):])
+    return json.loads(body["text"])
+
+
 def run(*argv):
     out, code = io.StringIO(), 0
     with mock.patch.object(sys, "argv", ["bridge.py", *argv]), contextlib.redirect_stdout(out):
@@ -69,7 +75,7 @@ class ResolveTests(Base):
         self.config({"inbox_routine": "trig_A", "peers": {"cos": {"mode": "inbox"}}})
         code, out = run("note", "hello")
         self.assertEqual(code, 0)
-        self.assertEqual(json.loads(out.splitlines()[1][len("ENVELOPE "):])["to"], "cos")
+        self.assertEqual(sent(out)["to"], "cos")
 
     def test_no_peer_and_no_default(self):
         self.config({"peers": {}})
@@ -86,9 +92,10 @@ class SendTests(Base):
                             "--recommend", "A", "--ref", "pr=https://x.test/1")
         self.assertEqual(code, 0)
         self.assertIsNone(rec.request)
-        first, second = out.splitlines()[:2]
+        first = out.splitlines()[0]
         self.assertTrue(first.startswith("SEND_VIA_INBOX routine=trig_IN id=q-"))
-        env = json.loads(second[len("ENVELOPE "):])
+        self.assertTrue(first.endswith("via=Claude_Code_Remote fire_trigger"))
+        env = sent(out)
         self.assertEqual((env["type"], env["question"], env["to"], env["context"]), ("question", "Merge now?", "cos", "ctx"))
         self.assertEqual(env["options"], ["A) yes", "B) no"])
         self.assertEqual(env["refs"], {"pr": "https://x.test/1"})
@@ -98,7 +105,8 @@ class SendTests(Base):
     def test_tell_carries_the_owner_words(self):
         self.config({"peers": {"cos": {"mode": "inbox"}}})
         code, out = run("tell", "Move card 1234 to review", "--to", "cos", "--owner-words", "sposta la card 1234 in review")
-        env = json.loads(out.splitlines()[1][len("ENVELOPE "):])
+        env = sent(out)
+        self.assertIn("via=RemoteTrigger run", out.splitlines()[0])
         self.assertEqual((env["type"], env["on_behalf_of"], env["owner_words"]), ("request", "owner", "sposta la card 1234 in review"))
 
     def test_webhook_mode_posts_and_never_prints_secrets(self):
@@ -112,6 +120,12 @@ class SendTests(Base):
         self.assertIn("via=webhook", out)
         for secret in ("secret-path", "supersecret", "abcdefabcdef"):
             self.assertNotIn(secret, out)
+
+    def test_bad_ref_is_a_clear_error(self):
+        self.config({"peers": {"cos": {"mode": "inbox"}}})
+        code, out = run("note", "x", "--to", "cos", "--ref", "no-equals-sign")
+        self.assertEqual(code, 4)
+        self.assertIn("key=value", out)
 
     def test_http_error(self):
         self.config({"peers": {"cos": {"webhook_url": URL, "authorization": AUTH}}})

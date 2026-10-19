@@ -45,28 +45,43 @@ did CoS answer?
 
 ## What you can do with it
 
-| When... | In Claude Code you say | What happens |
-|---|---|---|
-| A coding session is stuck on a decision your agent owns | `ask CoS whether to merge develop now or wait for the migration PR` | The answer lands in the session in about 30 s, and Claude carries on |
-| You want something done without leaving the terminal | `tell CoS to move card #1234 to review and ping the reviewer` | Your agent does it under its usual rules, and asks you first if it needs your OK |
-| Claude is missing context that lives with your agents | `ask CoS which card this PR belongs to and who reviews it` | Claude gets the card, the owner and the reviewer instead of guessing |
-| Your agents should know what just happened | `note CoS that PR 42 is merged and staging is next` | Your agent updates its board and its follow-ups |
-| Plans change while Claude is already working | *(your agent sends a note into the running session)* | The cloud session gets the new context as a notification, mid-task |
-| It's 2 a.m. and your laptop is closed | *(a cloud session asks on its own)* | The question and the answer still flow: both sides run in the cloud |
+Illustrative exchanges. Measured: an answer is back in the asking session in about 30 seconds.
 
-## See it in action
-
-An illustrative exchange; the ~30 s round trip is measured.
+**Unblock a coding session.** A decision your agent owns, answered without leaving the terminal.
 
 ```text
-you          ›  ask CoS whether this branch should merge develop now or wait for the migration PR
+you          ›  ask CoS whether to merge develop now or wait for the migration PR
+CoS · Grok   ›  B. Wait: the migration touches the same model, you'd resolve the conflict twice.
+Claude Code  ›  Waiting, then. I'll pick up the next task meanwhile.
+```
 
-Claude Code  ›  Sent to CoS (q-20261019-1036-aa5b).
+**Delegate from your terminal.** Your agent does it under its own rules, and asks first when it should.
 
-CoS · Grok   ›  B. Wait for the migration PR: merging now means resolving the same conflict
-                twice.                                                   answered in ~30 s
+```text
+you          ›  tell CoS to move card #1234 to review and ping the reviewer
+CoS · Grok   ›  accepted. Card moved, reviewer pinged on chat.                  done
+```
 
-Claude Code  ›  CoS recommends waiting. That is information, not approval: pause this branch?
+**Get the context Claude is missing.** It asks the agent that knows, instead of guessing.
+
+```text
+Claude Code  ›  This PR has no card. Asking CoS.
+CoS · Grok   ›  It belongs to card #1234. Dana owns it, Sam reviews.
+Claude Code  ›  Linked the PR to #1234 in the description.
+```
+
+**Keep your agents in the loop.** A note, no reply needed.
+
+```text
+you          ›  note to CoS: PR 42 is merged, staging is next
+CoS · Grok   ›  (updates its board and follow-ups)
+```
+
+**Let your agent steer a running session**, even at 2 a.m. with your laptop closed.
+
+```text
+CoS · Grok   ›  [note] The spec changed: use the v2 endpoint, v1 is frozen.
+Claude Code  ›  Got it from CoS. Switching the client to v2 before I open the PR.
 ```
 
 ## What happens when you send it
@@ -85,7 +100,7 @@ Your agent follows [`grok/BOOTSTRAP.md`](grok/BOOTSTRAP.md) and keeps you posted
 
 - **Claude CLI signed in on its box.** If not, it asks you once to sign in.
 - **Local exec on your Mac** (Grok Bot's). Without it you paste one line in the Terminal:
-  `curl -fsSL https://raw.githubusercontent.com/francoCosimo95/claude-grok-bridge/main/install.sh | sh -s -- <peer> --name <Agent> --inbox <trig id> --inbox-mode`
+  `curl -fsSL https://github.com/francoCosimo95/claude-grok-bridge/releases/latest/download/install.sh | sh -s -- <peer> --name <Agent> --inbox <trig id> --inbox-mode`
 - **Fast lane (optional).** If the agent can read its webhook routine's key, it stores it on
   your Mac (`chmod 600`) and messages reach it in about a second instead of its poll interval.
 - **Cloud sessions** need only the skill (in the repo's `.claude/skills/`): they send through
@@ -134,7 +149,10 @@ answers through it; answers are pushed into the session that asked. Messages fol
 - **Nothing extra to leak.** Zero-touch uses only logins you already have. The inbox routine
   has one connector (`Claude_Code_Remote`): no mail, drive or CRM. The optional fast-lane key
   can only wake one routine and lives `chmod 600` on your Mac.
-- **Verified delivery.** Every send is checked in the inbox log and retried once.
+- **Verified delivery, audited models.** Every send is checked in the inbox log. Every model in
+  the loop is checked against the actions it may take: a poll that tries anything but reading
+  stops with an alert. The inbox has no shell.
+- **Pinned releases.** Installs and updates come from the latest tagged release, never `main`.
 
 Report vulnerabilities privately: [SECURITY.md](SECURITY.md).
 

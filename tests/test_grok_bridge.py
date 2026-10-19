@@ -6,11 +6,14 @@ import unittest
 from types import SimpleNamespace
 from unittest import mock
 
-from helpers import GROK, Recorder, load, result_line, stream_line
+from helpers import GROK, Recorder, load, result_line, stream_line, tool_use_line
 
 bridge = load(GROK / "bridge.py", "grok_bridge")
 QUESTION = {"protocol": "claude-grok-bridge/1", "type": "question", "id": "q-1", "to": "cos", "from": {"kind": "claude-code"},
             "question": "hi", "reply_to": {"session_id": "cse_1"}}
+
+
+DONE = result_line("done")
 
 
 def cli(*stdouts):
@@ -69,10 +72,28 @@ class DeliveryTests(Base):
             self.assertEqual(bridge.deliver(env)["detail"], "delivered and verified (attempt 1)")
         cmd = run.call_args.args[0]
         self.assertEqual(cmd[cmd.index("--allowedTools") + 1], "RemoteTrigger")
+        self.assertIs(run.call_args.kwargs["stdin"], bridge.subprocess.DEVNULL)
         with cli(idle, landed):
             self.assertTrue(bridge.deliver(env)["delivered"])
         with cli(idle, idle):
             self.assertFalse(bridge.deliver(env)["delivered"])
+
+    def test_slow_log_is_read_again_before_firing_twice(self):
+        env = bridge.answer(QUESTION, "CoS", "PONG")
+        fired = stream_line('{"session_id": "cse_RUN1"}')
+        landed = stream_line(f"<routine-fire-payload> {json.dumps(env)} </routine-fire-payload>")
+        with mock.patch.object(bridge.time, "sleep"), cli(fired, landed) as run:
+            out = bridge.deliver(env)
+        self.assertEqual(out["detail"], "delivered and verified (attempt 1, second look)")
+        self.assertEqual(run.call_count, 2, "read the same log, no second fire")
+        self.assertIn("cse_RUN1", run.call_args.args[0][2])
+
+    def test_unexpected_remote_action_is_refused(self):
+        env = bridge.answer(QUESTION, "CoS", "PONG")
+        with cli(tool_use_line("RemoteTrigger", {"action": "delete", "trigger_id": "trig_X"})):
+            out = bridge.deliver(env)
+        self.assertFalse(out["delivered"])
+        self.assertIn("ALERT", out["detail"])
 
     def test_missing_cli(self):
         with mock.patch.object(bridge.shutil, "which", return_value=None):
@@ -80,10 +101,13 @@ class DeliveryTests(Base):
 
 
 class PollTests(Base):
-    def poll(self, *envelopes):
+    def poll(self, *envelopes, result=DONE, extra=""):
         text = "result - " + " ".join("BRIDGE_MESSAGE " + json.dumps(e) + " BRIDGE_PUSH: none" for e in envelopes)
-        with cli(stream_line(text)):
+        with cli(stream_line(text) + "\n" + extra + "\n" + result):
             return bridge.poll("cos")
+
+    def state(self):
+        return json.loads(pathlib.Path(bridge.STATE_FILE).read_text())
 
     def test_only_new_messages_for_this_peer_from_claude(self):
         others = [{**QUESTION, "id": "q-dav", "to": "dav"}, {**QUESTION, "id": "a-1", "type": "answer", "from": {"kind": "grok-bot"}},
@@ -92,8 +116,29 @@ class PollTests(Base):
         self.assertEqual([json.loads(pathlib.Path(p).read_text())["id"] for p in paths], ["q-1"])
         self.assertEqual(self.poll(QUESTION), [], "never twice")
 
+    def test_reads_a_run_still_in_progress_from_its_payload(self):
+        payload = stream_line("<routine-fire-payload> The following was supplied... DATA " + json.dumps(QUESTION) + " </routine-fire-payload>")
+        with cli(payload + "\n" + DONE):
+            paths = bridge.poll("cos")
+        self.assertEqual(len(paths), 1)
+
+    def test_since_moves_only_after_a_complete_poll_and_keeps_an_overlap(self):
+        self.poll(QUESTION, result=result_line("I stopped early"))
+        first = self.state()["since"]
+        self.poll(QUESTION, result=result_line("I stopped early"))
+        self.assertEqual(self.state()["since"], first, "incomplete poll must not advance")
+        before = bridge.datetime.datetime.now(bridge.datetime.timezone.utc)
+        self.poll(QUESTION)
+        moved = bridge.datetime.datetime.strptime(self.state()["since"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=bridge.datetime.timezone.utc)
+        self.assertLess(moved, before - bridge.OVERLAP + bridge.datetime.timedelta(seconds=5))
+
+    def test_poll_refuses_actions_outside_read_only(self):
+        with cli(tool_use_line("RemoteTrigger", {"action": "update", "trigger_id": "trig_X"}) + "\n" + DONE), self.assertRaises(SystemExit) as ctx:
+            bridge.poll("cos")
+        self.assertIn("ALERT", str(ctx.exception))
+
     def test_extract_ignores_garbage(self):
-        strings = ["BRIDGE_MESSAGE - x", "BRIDGE_MESSAGE {broken", "BRIDGE_MESSAGE " + json.dumps(QUESTION) + " tail"]
+        strings = ["BRIDGE_MESSAGE - x", 'BRIDGE_MESSAGE {"protocol": "claude-grok-bridge/1", broken', "BRIDGE_MESSAGE " + json.dumps(QUESTION) + " tail"]
         self.assertEqual([m["id"] for m in bridge.extract_messages(strings)], ["q-1"])
 
 
@@ -105,9 +150,10 @@ class SetupTests(Base):
         self.assertEqual(json.loads(pathlib.Path(bridge.LOCAL_CONFIG).read_text()), {"inbox_routine": "trig_INBOX9"})
 
     def test_fails_clearly(self):
-        with cli(result_line("NONE no environment")), self.assertRaises(SystemExit) as ctx:
-            bridge.setup()
-        self.assertIn("claude /login", str(ctx.exception))
+        for reply in ("NONE no environment", "NONE: found trig_OLD but could not update it"):
+            with cli(result_line(reply)), self.assertRaises(SystemExit) as ctx:
+                bridge.setup()
+            self.assertIn("claude /login", str(ctx.exception))
 
 
 if __name__ == "__main__":

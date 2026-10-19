@@ -24,5 +24,5 @@ PY
 ./scripts/sync.sh
 git add -A && git commit -q -m "chore(release): v$NEW" && git tag -a "v$NEW" -m "v$NEW"
 git push -q origin main "v$NEW"
-printf '%s\n' "$NOTES" | gh release create "v$NEW" --title "v$NEW" --notes-file -
+printf '%s\n' "$NOTES" | gh release create "v$NEW" install.sh --title "v$NEW" --notes-file -
 echo "released v$NEW"

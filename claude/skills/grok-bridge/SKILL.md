@@ -37,14 +37,15 @@ in this chat asked for it; ideas of your own are `ask` or `note`.
 
 The command prints one of:
 - `SENT id=... via=webhook`: delivered (fast lane).
-- `SEND_VIA_INBOX routine=<id> id=<msg id>` + `ENVELOPE {...}`: deliver it yourself, zero-touch:
+- `SEND_VIA_INBOX routine=<id> id=<msg id> via=<tool>` + `BODY {"text": ...}`: deliver it
+  yourself, zero-touch:
   1. Routine id: as printed; if it says `FIND:`, list routines and take the enabled one named
      "claude-grok-bridge inbox".
-  2. Run it with the JSON after `ENVELOPE ` as text: locally `RemoteTrigger` `run` with body
-     `{"text": "<json>"}` (load it via `ToolSearch` `select:RemoteTrigger` if deferred); in a
-     cloud session `Claude_Code_Remote` `fire_trigger`.
+  2. Run it with the tool named in `via=` and the `BODY` JSON exactly as printed (locally
+     `RemoteTrigger` `run`, load it via `ToolSearch` `select:RemoteTrigger` if deferred; in a
+     cloud session `Claude_Code_Remote` `fire_trigger` with the same text).
   3. Verify: `get_run_log` of the returned session shows a `routine-fire-payload` with your id.
-     If not, run once more.
+     If not, wait 10 s and read the same log again; only then run it once more.
 
 Tell the user in one line: what you sent, to whom, the id, and when to expect the answer
 (seconds via webhook, minutes via inbox).

@@ -1,6 +1,6 @@
 #!/bin/sh
 # claude-grok-bridge: install or update the Claude Code skill on this Mac (latest release).
-#   curl -fsSL https://raw.githubusercontent.com/francoCosimo95/claude-grok-bridge/main/install.sh | sh
+#   curl -fsSL https://github.com/francoCosimo95/claude-grok-bridge/releases/latest/download/install.sh | sh
 # Extra arguments register a Grok agent, e.g.: | sh -s -- cos --name CoS --inbox trig_... --inbox-mode
 set -e
 REPO="${CGB_REPO:-https://github.com/francoCosimo95/claude-grok-bridge}"
@@ -13,11 +13,15 @@ if [ -d "$DIR/.git" ]; then git -C "$DIR" fetch -q --tags origin; else git clone
 REF="${CGB_REF:-$(git -C "$DIR" tag -l 'v*' --sort=-v:refname | head -n 1)}"
 git -C "$DIR" -c advice.detachedHead=false checkout -q "${REF:-main}"
 mkdir -p "$HOME/.claude/skills"
-if [ -L "$SKILL" ] || [ ! -e "$SKILL" ]; then ln -sfn "$DIR/claude/skills/grok-bridge" "$SKILL"; fi
-echo "OK version $(cat "$DIR/VERSION")"
+if [ -L "$SKILL" ] || [ ! -e "$SKILL" ]; then
+  ln -sfn "$DIR/claude/skills/grok-bridge" "$SKILL"
+  echo "OK version $(cat "$DIR/VERSION")"
+else
+  echo "WARNING: $SKILL is a real folder, not replaced. Remove it and run this again to update."
+fi
 
 [ "$#" -eq 0 ] && exit 0
 case " $* " in
-  *" --inbox-mode "*) exec python3 -I "$SKILL/bridge.py" add-peer "$@" ;;
+  *" --inbox-mode "*|*" --stdin "*) exec python3 -I "$SKILL/bridge.py" add-peer "$@" ;;
   *) exec python3 -I "$SKILL/bridge.py" add-peer "$@" < /dev/tty ;;  # hidden prompts need the terminal
 esac

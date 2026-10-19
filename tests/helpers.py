@@ -28,6 +28,10 @@ def stream_line(text):
     return json.dumps({"type": "user", "message": {"role": "user", "content": [{"type": "tool_result", "content": [{"type": "text", "text": text}]}]}})
 
 
+def tool_use_line(name, tool_input):
+    return json.dumps({"type": "assistant", "message": {"role": "assistant", "content": [{"type": "tool_use", "name": name, "input": tool_input}]}})
+
+
 def result_line(text):
     return json.dumps({"type": "result", "subtype": "success", "result": text})
 
