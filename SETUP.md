@@ -22,18 +22,25 @@ by a human in a masked field or a chmod 600 file, never pasted into a chat.
 
 ## B. Grok Bot side (once per agent)
 
-1. **Install.** Tell the agent: "Clone https://github.com/<you>/claude-grok-bridge into
-   /workspace/claude-grok-bridge, create a venv there and `pip install mcp`."
-2. **Connector.** Grok Bot, Connectors, add a custom connector, type **MCP server (stdio
-   command)**, name `claude-code`, command
-   `/workspace/claude-grok-bridge/.venv/bin/python /workspace/claude-grok-bridge/grok/mcp_server.py`.
-   Tools: `check_bridge`, `read_envelope`, `reply_to_claude`.
-3. **Routine.** Create the "Claude Code question" routine with a **webhook** trigger and the
-   prompt in `grok/ROUTINE_PROMPT.md` (the agent can create its own routines: paste the file and
-   ask it to). Copy the routine's **Webhook URL** and **Authorization** value for step C.
-4. **Secrets.** Through Grok Bot's masked secret input: `CLAUDE_BRIDGE_INBOX_ROUTINE` (the
-   `trig_...` id from A1) and `CLAUDE_BRIDGE_INBOX_TOKEN` (the token from A2). Then ask the agent
-   to run `check_bridge`: both flags must be true.
+Send the agent this one message (replace `<repo url>`, `<AGENT>`, `<OWNER>`):
+
+```text
+Set up the Claude Code bridge from <repo url>:
+1. Clone it into /workspace/claude-grok-bridge, create a venv there and install
+   grok/requirements.txt.
+2. Register a custom connector named "claude-code", type MCP server (stdio command), command
+   /workspace/claude-grok-bridge/.venv/bin/python /workspace/claude-grok-bridge/grok/mcp_server.py
+   If you cannot register connectors yourself, tell me and I will add it in Connectors settings.
+3. Ask me for two secrets through the masked secret input: CLAUDE_BRIDGE_INBOX_ROUTINE and
+   CLAUDE_BRIDGE_INBOX_TOKEN. Then call claude-code check_bridge: both flags must be true.
+4. Create a routine named "Claude Code bridge" with a webhook trigger, using the prompt in
+   grok/ROUTINE_PROMPT.md with <AGENT> = your name and <OWNER> = me.
+5. Tell me when done, and where I find the routine's Webhook URL and Authorization value.
+   Never paste those two values in our chat.
+```
+
+Then copy the routine's **Webhook URL** and **Authorization** value (routine info pane) for
+part C.
 
 ## C. Tell Claude how to reach the agent
 
