@@ -6,6 +6,10 @@ Versioning: [SemVer](https://semver.org/) for the kit. The wire protocol has its
 
 ## [Unreleased]
 
+### Added
+- Animated replay of two real exchanges at the top of the README (`assets/demo.svg`, rendered by
+  `scripts/demo.py`): real times from the logs, waits shortened.
+
 ## [0.12.1] - 2026-10-19
 
 ### Added

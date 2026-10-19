@@ -2,6 +2,7 @@ import json
 import re
 import subprocess
 import unittest
+import xml.etree.ElementTree as ET
 
 from helpers import ROOT, load
 
@@ -46,6 +47,13 @@ class RepoConsistencyTests(unittest.TestCase):
         for name, messages in chats.CHATS.items():
             self.assertEqual((ROOT / "assets" / f"chat-{name}.svg").read_text(), chats.render(messages), f"run python3 scripts/chats.py ({name})")
             self.assertIn(f"assets/chat-{name}.svg", (ROOT / "README.md").read_text())
+
+    def test_readme_demo_matches_its_source(self):
+        demo = load(ROOT / "scripts" / "demo.py", "demo")
+        self.assertEqual((ROOT / "assets" / "demo.svg").read_text(), demo.render(), "run python3 scripts/demo.py")
+        self.assertIn('<img src="assets/demo.svg"', (ROOT / "README.md").read_text())
+        self.assertIn(demo.CAPTION, (ROOT / "README.md").read_text())
+        ET.fromstring(demo.render())
 
     def test_both_sides_use_the_one_protocol_module(self):
         shared = load(ROOT / "protocol.py", "shared_protocol")
