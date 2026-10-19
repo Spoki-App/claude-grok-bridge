@@ -6,6 +6,8 @@ Versioning: [SemVer](https://semver.org/) for the kit. The wire protocol has its
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-19
+
 Fixes from an independent review (Fable), checked against the five pillars.
 
 ### Fixed
