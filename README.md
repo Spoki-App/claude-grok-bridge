@@ -13,8 +13,14 @@ own automation endpoint:
   the Claude CLI it already has (or the documented routine fire API with a token). The inbox
   pushes the answer into the asking cloud session.
 
-**Setup is one paste:** tell Claude Code "set up the grok bridge for CoS", paste the message it
-prints to your Grok agent, done. The agent installs and wires both sides and runs a self-test.
+**Setup is one line** sent to your Grok agent:
+
+```text
+Set up the Claude Code bridge: follow https://github.com/francoCosimo95/claude-grok-bridge/blob/main/grok/BOOTSTRAP.md
+```
+
+The agent installs and wires both sides (including the Claude inbox routine, through the Claude
+CLI on its box) and runs a self-test.
 
 ```mermaid
 sequenceDiagram
@@ -37,12 +43,13 @@ sequenceDiagram
 | Path | What |
 |---|---|
 | `PROTOCOL.md` | `claude-grok-bridge/1`: envelopes (`question`, `request`, `note`, `answer`), statuses, trust rules |
-| `SETUP.md` | setup: you paste one message to your Grok agent, everything else is automatic |
+| `SETUP.md` | setup: one line to your Grok agent, everything else is automatic |
+| `install.sh` | fallback Mac installer when the agent has no local exec |
 | `claude/skills/grok-bridge/` | Claude Code skill + `send_to_grok.py` |
 | `claude/INBOX_ROUTINE.md` | the inbox routine (create body + prompt) |
 | `grok/mcp_server.py` | Grok Bot custom connector **"claude-code"** (stdio MCP): `check_bridge`, `read_envelope`, `reply_to_claude` |
 | `grok/reply_to_claude.py` | answers back to Claude: via the Claude CLI already on the box (no token) or a routine API token |
-| `grok/BOOTSTRAP.md` | the one message you paste to your Grok agent |
+| `grok/BOOTSTRAP.md` | what the agent follows to set everything up |
 | `grok/ROUTINE_PROMPT.md` | the Grok agent's "Claude Code bridge" routine |
 | `examples/` | config and envelope samples |
 

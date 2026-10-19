@@ -11,6 +11,7 @@ Inbox routine id (not a secret): env CLAUDE_BRIDGE_INBOX_ROUTINE, or "inbox_rout
 grok/bridge.local.json next to this script.
 
 Usage:
+  python3 reply_to_claude.py --discover [--inbox trig_...]
   python3 reply_to_claude.py --check
   python3 reply_to_claude.py --question envelope.json --agent CoS --status answered --answer "text"
   python3 reply_to_claude.py --in-reply-to q-123 --session-id session_... --agent CoS --answer-file answer.txt
@@ -34,11 +35,22 @@ MAX_TEXT = 60_000
 STATUSES = ["answered", "accepted", "escalated", "needs_confirmation", "done", "declined"]
 TOKENISH = re.compile(r"sk-ant-[A-Za-z0-9_\-]+")
 LOCAL_CONFIG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bridge.local.json")
+INBOX_DOC = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "claude", "INBOX_ROUTINE.md")
 CLI_PROMPT = (
     "Use the RemoteTrigger tool exactly once: action \"run\", trigger_id \"{routine}\", body "
     "{{\"text\": <the JSON string below, passed verbatim as a string>}}. Do nothing else. Then reply "
     "with only the HTTP status line the tool returned.\n\n{text}"
 )
+DISCOVER_PROMPT = """You are setting up claude-grok-bridge on this Claude account. Use only the RemoteTrigger tool,
+the Read tool and the schedule skill. Do nothing else.
+1. RemoteTrigger action "list". If an enabled routine named exactly "Grok bridge inbox" exists,
+   reply with only its id (trig_...) and stop.
+2. Otherwise create it. Read {inbox_doc} for the create body and the inbox prompt. For
+   environment_id, load the schedule skill to see this account's environments and pick the one
+   named "Default" (else the first). Generate a fresh lowercase UUID for the event. Then call
+   RemoteTrigger "update" on the new routine so mcp_connections contains only the
+   Claude_Code_Remote connector, exactly as the doc says.
+3. Reply with only the new routine id (trig_...), or NONE and one short reason if you could not."""
 
 
 def inbox_routine():
@@ -125,6 +137,28 @@ def fire(envelope):
     return fire_with_token(routine, token, text) if token else fire_with_cli(routine, text)
 
 
+def discover(given):
+    routine = given
+    if not routine:
+        claude = shutil.which("claude")
+        if not claude:
+            sys.exit("claude CLI not found on this box; pass --inbox trig_... instead")
+        prompt = DISCOVER_PROMPT.format(inbox_doc=INBOX_DOC)
+        cmd = [claude, "-p", prompt, "--allowedTools", "RemoteTrigger", "Read", "Skill", "--output-format", "text", "--model", "sonnet"]
+        try:
+            out = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        except subprocess.TimeoutExpired:
+            sys.exit("claude CLI timed out while looking for the inbox routine")
+        m = re.search(r"\btrig_[A-Za-z0-9]+\b", out.stdout or "")
+        if not m:
+            said = TOKENISH.sub("<redacted>", (out.stdout or out.stderr).strip())[-300:]
+            sys.exit(f"could not find or create the 'Grok bridge inbox' routine. Is the claude CLI signed in (claude /login)? CLI said: {said}")
+        routine = m.group(0)
+    with open(LOCAL_CONFIG, "w") as f:
+        json.dump({"inbox_routine": routine}, f)
+    return routine
+
+
 def check():
     token = bool(os.environ.get("CLAUDE_BRIDGE_INBOX_TOKEN"))
     try:
@@ -142,6 +176,8 @@ def check():
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true")
+    ap.add_argument("--discover", action="store_true", help="find (or create) the owner's 'Grok bridge inbox' routine and save its id")
+    ap.add_argument("--inbox", help="with --discover: use this trig_... id instead of looking it up")
     ap.add_argument("--question", help="path to the envelope JSON being answered")
     ap.add_argument("--in-reply-to")
     ap.add_argument("--session-id")
@@ -150,6 +186,9 @@ def main():
     ap.add_argument("--answer")
     ap.add_argument("--answer-file")
     args = ap.parse_args()
+    if args.discover:
+        print(f"inbox_routine={discover(args.inbox)} saved to {LOCAL_CONFIG}")
+        return
     if args.check:
         print(json.dumps(check()))
         return

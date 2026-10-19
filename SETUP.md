@@ -1,40 +1,34 @@
-# Setup: one paste
+# Setup: one line
 
-You do one thing: paste a message to your Grok Bot agent. Claude and the agent do the rest.
+Send your Grok Bot agent this one line:
 
-## 1. In Claude Code
-
-Say: **"set up the grok bridge for CoS"** (any agent name). If the skill is not installed yet,
-install it first (or let the agent do it in step 2):
-
-```bash
-git clone https://github.com/francoCosimo95/claude-grok-bridge ~/claude-grok-bridge && ln -s ~/claude-grok-bridge/claude/skills/grok-bridge ~/.claude/skills/grok-bridge
+```text
+Set up the Claude Code bridge: follow https://github.com/francoCosimo95/claude-grok-bridge/blob/main/grok/BOOTSTRAP.md
 ```
 
-Claude creates the **inbox routine** on your Claude account (or reuses it) and prints the
-bootstrap message with every id filled in.
-
-## 2. In Grok Bot: paste the message
-
-The agent, by itself (`grok/BOOTSTRAP.md`):
-1. clones the repo on its box and checks it can answer through the Claude CLI already signed in
-   there (no new token);
-2. creates its "Claude Code bridge" routine with a webhook trigger;
-3. on your Mac, through Grok Bot's local exec, installs the skill if missing and writes the
-   routine's webhook URL and key into `~/.config/grok-bridge/config.json` (chmod 600), never
-   in the chat;
-4. runs a self-test: a question from your Mac to itself, answered PONG back into Claude;
+That's it. The agent, by itself (`grok/BOOTSTRAP.md`):
+1. clones the repo on its box and, through the Claude CLI signed in there (your Claude
+   account), finds or **creates** your "Grok bridge inbox" routine;
+2. creates its own "Claude Code bridge" routine with a webhook trigger;
+3. on your Mac, through Grok Bot's local exec, installs the Claude Code skill and writes its
+   webhook URL and key into `~/.config/grok-bridge/config.json` (chmod 600), never in a chat;
+4. runs a self-test (a question from your Mac answered PONG back into Claude);
 5. tells you "bridge ready".
 
-It only comes back to you if a step is impossible for it (for example it cannot read its own
-webhook key: then you run one command and paste the two values in hidden input).
+Then in any Claude Code session: "ask CoS ...", "tell CoS to ...", "did CoS answer?".
+
+What the agent needs, and asks you for only if missing:
+- the Claude CLI signed in on its box (`claude /login`);
+- local exec on your Mac; without it, you run one command it gives you (`install.sh`, hidden
+  input for the two values).
 
 ## Fallbacks
 
-- No Claude CLI on the agent's box: generate an API token on the inbox routine
+- The agent cannot use a Claude CLI at all: generate an API token on the inbox routine
   (claude.ai/code/routines, Edit, Add another trigger, API, Generate token) and give it to the
   agent as `CLAUDE_BRIDGE_INBOX_TOKEN` through its masked secret input.
-- Manual peer config: `python3 -I ~/.claude/skills/grok-bridge/scripts/add_peer.py --peer cos --name CoS --inbox <trig id>`
+- Manual install and peer config on a Mac:
+  `curl -fsSL https://raw.githubusercontent.com/francoCosimo95/claude-grok-bridge/main/install.sh | sh -s -- --peer cos --name CoS --inbox <trig id>`
   (hidden prompts).
 - Optional connector: register `grok/mcp_server.py` as a stdio MCP connector named `claude-code`
   for typed tools (`check_bridge`, `read_envelope`, `reply_to_claude`).

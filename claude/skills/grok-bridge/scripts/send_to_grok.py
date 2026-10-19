@@ -5,6 +5,7 @@ Usage:
   python3 -I send_to_grok.py --check [--peer cos]
   python3 -I send_to_grok.py --peer cos --envelope question.json
   python3 -I send_to_grok.py --peers
+  python3 -I send_to_grok.py --peer cos --hello
 
 Config, first match wins:
   env   GROK_BRIDGE_<PEER>_URL, GROK_BRIDGE_<PEER>_AUTH, GROK_BRIDGE_INBOX_ROUTINE
@@ -17,6 +18,7 @@ Exit codes: 0 delivered, 2 config problem, 3 HTTP or network error, 4 invalid en
 """
 
 import argparse
+import datetime
 import json
 import os
 import re
@@ -92,7 +94,8 @@ def main():
     ap.add_argument("--peer", default="cos")
     ap.add_argument("--check", action="store_true")
     ap.add_argument("--peers", action="store_true")
-    ap.add_argument("--envelope", help="path to the question envelope JSON")
+    ap.add_argument("--envelope", help="path to the envelope JSON")
+    ap.add_argument("--hello", action="store_true", help="send a self-test question that asks the agent to answer PONG")
     args = ap.parse_args()
 
     if args.peers:
@@ -102,10 +105,24 @@ def main():
     if args.check:
         print(f"CONFIG_OK peer={args.peer} name={name} inbox_routine={inbox or '<unset>'}")
         return
-    if not args.envelope:
-        ap.error("--envelope is required")
-    with open(args.envelope) as f:
-        env = json.load(f)
+    if args.hello:
+        now = datetime.datetime.now(datetime.timezone.utc)
+        env = {
+            "protocol": PROTOCOL,
+            "type": "question",
+            "id": "q-hello-" + now.strftime("%Y%m%d-%H%M%S"),
+            "from": {"kind": "claude-code", "label": "bridge self-test"},
+            "to": args.peer,
+            "subject": "Bridge self-test",
+            "question": "Reply with the single word PONG.",
+            "reply_to": {"session_id": os.environ.get("CLAUDE_CODE_REMOTE_SESSION_ID") or None},
+            "sent_at": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        }
+    elif args.envelope:
+        with open(args.envelope) as f:
+            env = json.load(f)
+    else:
+        ap.error("--envelope or --hello is required")
     if inbox:
         env.setdefault("reply_to", {}).setdefault("inbox_routine", inbox)
     raw = validate(env)

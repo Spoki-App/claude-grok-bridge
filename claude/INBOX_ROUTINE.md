@@ -13,18 +13,16 @@ routine that a Grok agent fires through the documented routine API.
 
 ## Create it
 
-From any Claude Code session that has the `RemoteTrigger` tool (or ask Claude: "create the
-grok-bridge inbox routine from INBOX_ROUTINE.md"), with `action: "create"` and this body. Pick
-any environment; the routine needs no repository.
+Normally the Grok agent creates it during bootstrap (`reply_to_claude.py --discover`, through the
+Claude CLI on its box). By hand: from any Claude Code session that has the `RemoteTrigger` tool,
+`action: "create"` with this body. Use the account's "Default" environment (the schedule skill
+lists environments); the routine needs no repository.
 
 ```json
 {
   "name": "Grok bridge inbox",
   "run_once_at": "2099-01-01T00:00:00Z",
   "enabled": true,
-  "mcp_connections": [
-    {"connector_uuid": "<Claude_Code_Remote connector uuid>", "name": "Claude_Code_Remote", "url": "https://api.anthropic.com/v1/code/mcp/meta"}
-  ],
   "job_config": {"ccr": {
     "environment_id": "<env_...>",
     "session_context": {"model": "claude-sonnet-5-5", "sources": [], "allowed_tools": ["Bash"]},
@@ -36,13 +34,13 @@ any environment; the routine needs no repository.
 
 - `run_once_at` far in the future keeps the routine enabled without a schedule: it only runs
   when fired.
-- On create, claude.ai attaches **every** connector of the account by default. Keep only
-  `Claude_Code_Remote` (update `mcp_connections`): the inbox reads untrusted payloads and must not
-  reach mail, drive, CRM and so on.
-- Then on claude.ai/code/routines open the routine, Edit, Add another trigger, **API**,
-  **Generate token**. The token is shown once. Give it, with the routine id, to the Grok agent
-  through its masked secret input as `CLAUDE_BRIDGE_INBOX_TOKEN` and
-  `CLAUDE_BRIDGE_INBOX_ROUTINE`.
+- On create, claude.ai attaches **every** connector of the account. Then call `update` with
+  `mcp_connections` = only the `Claude_Code_Remote` entry, copied (connector_uuid, name, url)
+  from the create response: the inbox reads untrusted payloads and must not reach mail, drive,
+  CRM and so on, but it needs `Claude_Code_Remote` to push answers into sessions.
+- Only if the Grok agent has no signed-in Claude CLI: on claude.ai/code/routines open the
+  routine, Edit, Add another trigger, **API**, **Generate token** (shown once) and give it to
+  the agent through its masked secret input as `CLAUDE_BRIDGE_INBOX_TOKEN`.
 
 ## Inbox prompt
 
