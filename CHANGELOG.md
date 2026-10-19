@@ -6,6 +6,8 @@ Versioning: [SemVer](https://semver.org/) for the kit. The wire protocol has its
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-10-19
+
 ### Changed
 - One `protocol.py` holds what both sides share (protocol name, types, statuses, A2A states, size
   and id rules, validation); `scripts/sync.sh` copies it next to each `bridge.py`.
