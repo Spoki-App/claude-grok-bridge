@@ -5,6 +5,7 @@ import unittest
 
 from helpers import ROOT
 
+EM_DASH = chr(0x2014)
 TEXT_SUFFIXES = {".md", ".py", ".sh", ".json", ".txt", ".yml", ".yaml", ""}
 
 
@@ -15,7 +16,7 @@ def tracked_files():
 
 class RepoConsistencyTests(unittest.TestCase):
     def test_no_em_dash(self):
-        offenders = [str(p.relative_to(ROOT)) for p in tracked_files() if "—" in p.read_text(errors="ignore")]
+        offenders = [str(p.relative_to(ROOT)) for p in tracked_files() if EM_DASH in p.read_text(errors="ignore")]
         self.assertEqual(offenders, [], "house style: no em dash characters")
 
     def test_skill_references_are_in_sync(self):
