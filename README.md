@@ -43,6 +43,17 @@ did CoS answer?
 |---|---|---|---|---|
 | One line to your agent. Nothing else to type. | Two small scripts, zero dependencies. | `ask`, `tell`, `note`. One name per thing. | Messages are data. Answers are not approvals. No secrets in chats. | Answers in ~30 s, pushed into the session that asked. |
 
+## What you can do with it
+
+| When... | In Claude Code you say | What happens |
+|---|---|---|
+| A coding session is stuck on a decision your agent owns | `ask CoS whether to merge develop now or wait for the migration PR` | The answer lands in the session in about 30 s, and Claude carries on |
+| You want something done without leaving the terminal | `tell CoS to move card #1234 to review and ping the reviewer` | Your agent does it under its usual rules, and asks you first if it needs your OK |
+| Claude is missing context that lives with your agents | `ask CoS which card this PR belongs to and who reviews it` | Claude gets the card, the owner and the reviewer instead of guessing |
+| Your agents should know what just happened | `note CoS that PR 42 is merged and staging is next` | Your agent updates its board and its follow-ups |
+| Plans change while Claude is already working | *(your agent sends a note into the running session)* | The cloud session gets the new context as a notification, mid-task |
+| It's 2 a.m. and your laptop is closed | *(a cloud session asks on its own)* | The question and the answer still flow: both sides run in the cloud |
+
 ## See it in action
 
 An illustrative exchange; the ~30 s round trip is measured.
