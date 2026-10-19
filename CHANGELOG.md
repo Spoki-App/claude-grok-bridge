@@ -6,6 +6,8 @@ Versioning: [SemVer](https://semver.org/) for the kit. The wire protocol has its
 
 ## [Unreleased]
 
+## [0.12.1] - 2026-10-19
+
 ### Added
 - `bridge.py remove-peer <peer>` forgets an agent registered by mistake and updates the agents
   block in `~/.claude/CLAUDE.md` (the block goes away with the last agent).
