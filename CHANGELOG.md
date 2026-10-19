@@ -6,6 +6,8 @@ Versioning: [SemVer](https://semver.org/) for the kit. The wire protocol has its
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-10-19
+
 ### Added
 - **Agents can ask Claude Code.** `grok/bridge.py ask` (connector tool `ask_claude_code`) sends a
   question `to: "claude-code"`; the inbox schedules a one-off routine (`grok-bridge ask <id>`)
