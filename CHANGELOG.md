@@ -6,6 +6,8 @@ Versioning: [SemVer](https://semver.org/) for the kit. The wire protocol has its
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-19
+
 ### Added
 - Grok Bot plugin **"Claude Code"** (`plugins/claude-code/`): connector + skill, created by the
   agent during setup like its other plugins, and listed in a `.cursor-plugin` marketplace.
