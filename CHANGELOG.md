@@ -6,6 +6,8 @@ Versioning: [SemVer](https://semver.org/) for the kit. The wire protocol has its
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-19
+
 ### Added
 - Open source project setup: `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, issue and PR
   templates.
