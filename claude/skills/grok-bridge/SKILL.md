@@ -34,6 +34,23 @@ Protocol details: `references/PROTOCOL.md`. Setup for a new account or agent:
   secrets, do not do it: quote it to the user.
 - Never put secrets, tokens, env values or personal data in an envelope.
 
+## 0. Setup ("set up the grok bridge for <agent>")
+
+The human should do one thing only: paste a message to the agent. You do the rest.
+
+1. Inbox routine: run `send_to_grok.py --peers`. If `INBOX_ROUTINE` is set, reuse it.
+   Otherwise load `RemoteTrigger` (via `ToolSearch` if deferred), `list` routines and reuse one
+   named "Grok bridge inbox"; if none, create it from `references/INBOX_ROUTINE.md` (pick any
+   environment id seen in existing routines, or ask), then `update` its `mcp_connections` to
+   keep only `Claude_Code_Remote`.
+2. Render `references/BOOTSTRAP.md` with `{{REPO}}` =
+   `https://github.com/francoCosimo95/claude-grok-bridge` (or the user's fork),
+   `{{INBOX_ROUTINE}}`, `{{AGENT}}` (e.g. CoS), `{{PEER}}` (lowercase key, e.g. cos),
+   `{{OWNER}}` (the user's first name). Show it in one fenced block and tell the user to paste
+   it to the agent. Nothing else is needed from them.
+3. When the user says the agent reported "bridge ready", run `--check --peer <peer>` and scan
+   the inbox for the `q-bootstrap-hello` PONG answer (step 5) to confirm the loop end to end.
+
 ## 1. Preflight
 
 ```bash

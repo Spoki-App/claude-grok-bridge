@@ -5,7 +5,7 @@ Register in Grok Bot: Connectors > custom connector > MCP server (stdio command)
   name:    claude-code
   command: /workspace/claude-grok-bridge/.venv/bin/python /workspace/claude-grok-bridge/grok/mcp_server.py
 
-Env (masked secret input): CLAUDE_BRIDGE_INBOX_ROUTINE, CLAUDE_BRIDGE_INBOX_TOKEN
+Optional: this connector is a convenience; the routine can call grok/reply_to_claude.py directly.
 """
 
 import os
@@ -18,19 +18,15 @@ from types import SimpleNamespace
 
 from mcp.server.fastmcp import FastMCP
 
-from reply_to_claude import PROTOCOL, STATUSES, build_answer, fire
+from reply_to_claude import PROTOCOL, STATUSES, build_answer, check, fire
 
 mcp = FastMCP("claude-code")
 
 
 @mcp.tool()
 def check_bridge() -> dict:
-    """Check that the Claude Code inbox routine id and token are configured (values are never returned)."""
-    return {
-        "protocol": PROTOCOL,
-        "inbox_routine_set": bool(os.environ.get("CLAUDE_BRIDGE_INBOX_ROUTINE")),
-        "inbox_token_set": bool(os.environ.get("CLAUDE_BRIDGE_INBOX_TOKEN")),
-    }
+    """Check the bridge config: inbox routine id, delivery mode (token or claude CLI). No secret is returned."""
+    return check()
 
 
 @mcp.tool()
