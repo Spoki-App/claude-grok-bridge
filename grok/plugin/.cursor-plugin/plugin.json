@@ -1,7 +1,7 @@
 {
   "name": "claude-code",
   "displayName": "Claude Code",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "description": "Talk with Claude Code sessions: answer their questions and requests, and message them.",
   "author": {
     "name": "Cosimo Franco"

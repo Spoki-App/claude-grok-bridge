@@ -6,6 +6,8 @@ Versioning: [SemVer](https://semver.org/) for the kit. The wire protocol has its
 
 ## [Unreleased]
 
+## [0.9.2] - 2026-10-19
+
 ### Fixed
 - Agent side: the transcript audit crashed when an event's `message` was text, not an object
   (reported by CoS during the 0.9.1 setup).
