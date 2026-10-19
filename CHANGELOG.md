@@ -6,6 +6,8 @@ Versioning: [SemVer](https://semver.org/) for the kit. The wire protocol has its
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-19
+
 Rebuilt around five pillars: easy, compact, clear, safe, fast. **Breaking for installs**: send
 your Grok agent the setup line again; it migrates routines and paths.
 
