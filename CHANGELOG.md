@@ -6,6 +6,10 @@ Versioning: [SemVer](https://semver.org/) for the kit. The wire protocol has its
 
 ## [Unreleased]
 
+### Fixed
+- Accept an Authorization value pasted with its `Authorization:` header prefix (Grok Bot copies
+  it that way); stripped on save and on send.
+
 ## [0.1.0] - 2026-10-19
 
 ### Added

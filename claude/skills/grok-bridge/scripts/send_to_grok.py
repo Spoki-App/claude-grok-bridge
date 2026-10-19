@@ -82,6 +82,7 @@ def resolve(peer):
     auth = os.environ.get(f"GROK_BRIDGE_{key}_AUTH")
     entry = (cfg.get("peers") or {}).get(peer, {})
     url, auth = url or entry.get("webhook_url", ""), auth or entry.get("authorization", "")
+    auth = re.sub(r"(?i)^\s*authorization\s*:\s*", "", auth).strip()
     inbox = os.environ.get("GROK_BRIDGE_INBOX_ROUTINE") or cfg.get("inbox_routine", "")
     if not url.startswith("https://") or not auth:
         fail(2, f"CONFIG_MISSING: no webhook for peer '{peer}' in env GROK_BRIDGE_{key}_URL/_AUTH or {path}")

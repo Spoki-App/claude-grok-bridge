@@ -13,10 +13,16 @@ import argparse
 import getpass
 import json
 import os
+import re
 import sys
 
 DEFAULT_CONFIG = os.path.join(os.path.expanduser("~"), ".config", "grok-bridge", "config.json")
 BOLD, DIM, GREEN, RESET = ("\033[1m", "\033[2m", "\033[32m", "\033[0m") if sys.stdout.isatty() else ("", "", "", "")
+
+
+def clean_auth(value):
+    """Accept a pasted 'Authorization: Bearer x' header line as well as the bare 'Bearer x' value."""
+    return re.sub(r"(?i)^\s*authorization\s*:\s*", "", value).strip()
 
 
 def ask(prompt, valid, error):
@@ -38,7 +44,7 @@ Pasted text stays hidden: nothing appears while you paste. That is normal.{RESET
 """)
     url = ask(f"{BOLD}1 of 2{RESET}  Paste the Webhook URL, then press Enter: ", lambda v: v.startswith("https://"), "That does not look like a URL starting with https://.")
     print(f"  {GREEN}OK{RESET}")
-    auth = ask(f"{BOLD}2 of 2{RESET}  Paste the Authorization value (often starts with 'Bearer'), then press Enter: ", lambda v: len(v) >= 8, "That value looks empty or too short.")
+    auth = clean_auth(ask(f"{BOLD}2 of 2{RESET}  Paste the Authorization value (often starts with 'Bearer'), then press Enter: ", lambda v: len(clean_auth(v)) >= 8, "That value looks empty or too short."))
     print(f"  {GREEN}OK{RESET}")
     return url, auth
 
@@ -63,7 +69,7 @@ def main():
 
     if args.stdin:
         data = json.load(sys.stdin)
-        url, auth = data.get("webhook_url", "").strip(), data.get("authorization", "").strip()
+        url, auth = data.get("webhook_url", "").strip(), clean_auth(data.get("authorization", ""))
         if not url.startswith("https://") or not auth:
             sys.exit("stdin must hold webhook_url (https) and authorization")
     else:
