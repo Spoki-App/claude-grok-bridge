@@ -233,6 +233,16 @@ class AddPeerTests(unittest.TestCase):
         out = subprocess.run([sys.executable, "-I", str(SKILL / "bridge.py"), "peers"], capture_output=True, text=True, env=env).stdout
         self.assertIn("FOR_REPO_CLAUDE_MD My Grok Bot agents, reachable from Claude Code with the grok-bridge skill: Ava (`--to ava`).", out)
 
+    def test_remove_peer_forgets_the_agent_and_its_name(self):
+        self.add("", "cos", "--name", "CoS", "--inbox-mode")
+        self.add("", "brandon", "--name", "Brandon", "--inbox-mode")
+        env = {**os.environ, "GROK_BRIDGE_CONFIG": self.cfg, "GROK_BRIDGE_CLAUDE_MD": str(self.claude_md)}
+        res = subprocess.run([sys.executable, "-I", str(SKILL / "bridge.py"), "remove-peer", "brandon"], capture_output=True, text=True, env=env)
+        self.assertEqual(res.returncode, 0, res.stderr)
+        self.assertEqual(list(self.saved()["peers"]), ["cos"])
+        self.assertIn("CoS (`--to cos`).", self.claude_md.read_text())
+        self.assertNotIn("Brandon", self.claude_md.read_text())
+
     def test_rejects_plain_http(self):
         self.assertNotEqual(self.add(json.dumps({"webhook_url": "http://h.test", "authorization": "Bearer abcdefgh"}), "cos", "--stdin").returncode, 0)
 

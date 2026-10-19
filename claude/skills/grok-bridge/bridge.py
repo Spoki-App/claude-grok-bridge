@@ -10,6 +10,7 @@
   bridge.py send  envelope.json [--to ava]        send a prepared envelope
   bridge.py check [--to ava] | peers | version
   bridge.py add-peer ava --name Ava [--inbox trig_...] [--inbox-mode [--no-fast-lane] | --stdin] [--no-claude-md]
+  bridge.py remove-peer ava                        forget an agent registered by mistake
   bridge.py drop < envelope.json                  the agent's local exec leaves a message for local sessions
 
 Delivery: if the peer has a webhook (fast lane) it is POSTed and prints "SENT ... via=webhook".
@@ -341,16 +342,30 @@ def remember_agents(peers):
     path = claude_md_path()
     if not os.path.isdir(os.path.dirname(path)):
         return None
-    block = f"<!-- grok-bridge:agents -->\n{agents_line(peers)}\n<!-- /grok-bridge:agents -->"
+    block = f"<!-- grok-bridge:agents -->\n{agents_line(peers)}\n<!-- /grok-bridge:agents -->" if peers else ""
     try:
         with open(path) as f:
             text = f.read()
     except FileNotFoundError:
         text = ""
-    text = AGENTS_BLOCK.sub(lambda _m: block, text) if AGENTS_BLOCK.search(text) else text.rstrip("\n") + ("\n\n" if text.strip() else "") + block + "\n"
+    if AGENTS_BLOCK.search(text):
+        text = AGENTS_BLOCK.sub(lambda _m: block, text)
+    elif block:
+        text = text.rstrip("\n") + ("\n\n" if text.strip() else "") + block + "\n"
     with open(path, "w") as f:
         f.write(text)
     return path
+
+
+def cmd_remove_peer(args):
+    cfg = load_config()
+    if args.peer not in (cfg.get("peers") or {}):
+        fail(2, f"'{args.peer}' is not registered here (see: bridge.py peers)")
+    del cfg["peers"][args.peer]
+    print(f"Removed '{args.peer}' from {save_config(cfg)}.")
+    if not args.no_claude_md and remember_agents(cfg["peers"]):
+        print("Updated the agents block in your CLAUDE.md.")
+    print("Its routines in Grok Bot stay until you ask that agent to delete them.")
 
 
 def stdin_secrets():
@@ -414,6 +429,10 @@ def main():
     sub.add_parser("peers").set_defaults(func=cmd_peers)
     sub.add_parser("version").set_defaults(func=cmd_version)
     sub.add_parser("drop", help="leave an agent's message (stdin) for the local channel").set_defaults(func=cmd_drop)
+    p = sub.add_parser("remove-peer", help="forget an agent registered on this machine")
+    p.add_argument("peer")
+    p.add_argument("--no-claude-md", action="store_true", help="leave ~/.claude/CLAUDE.md as it is")
+    p.set_defaults(func=cmd_remove_peer)
     p = sub.add_parser("add-peer", help="register a Grok agent on this machine")
     p.add_argument("peer")
     p.add_argument("--name")
