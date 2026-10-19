@@ -6,6 +6,8 @@ Versioning: [SemVer](https://semver.org/) for the kit. The wire protocol has its
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-19
+
 ### Added
 - **Native Claude Code plugin** `grok-bridge`: the repo is a Claude Code marketplace
   (`/plugin install grok-bridge --marketplace francoCosimo95/claude-grok-bridge`). Cloud sessions
