@@ -34,9 +34,9 @@ a config file. Want the latest version later? Send the same line again.
 From then on, in any Claude Code session, you just talk:
 
 ```text
-ask CoS whether we should ship the billing fix today
-tell CoS to move card #1234 to review and ping the reviewer
-did CoS answer?
+ask Grok Bot whether we should ship the billing fix today
+tell Grok Bot to move card #1234 to review and ping the reviewer
+did Grok Bot answer?
 ```
 
 | **Easy** | **Compact** | **Clear** | **Safe** | **Fast** |
@@ -49,27 +49,27 @@ Illustrative exchanges. Measured: an answer is back in the asking session in abo
 
 **Unblock a coding session.** A decision your agent owns, answered without leaving the terminal.
 
-<img src="assets/chat-unblock.svg" width="620" alt="you › ask CoS whether to merge develop now or wait for the migration PR / CoS · Grok › B. Wait: the migration touches the same model, you'd resolve the conflict twice. / Claude Code › Waiting, then. I'll pick up the next task meanwhile.">
+<img src="assets/chat-unblock.svg" width="620" alt="you: ask Grok Bot whether to merge develop now or wait for the migration PR / Grok Bot: B. Wait: the migration touches the same model, you'd resolve the conflict twice. / Claude Code: Waiting, then. I'll pick up the next task meanwhile.">
 
 **Delegate from your terminal.** Your agent does it under its own rules, and asks first when it should.
 
-<img src="assets/chat-delegate.svg" width="620" alt="you › tell CoS to move card #1234 to review and ping the reviewer / CoS · Grok › accepted. Card moved, reviewer pinged on chat. done">
+<img src="assets/chat-delegate.svg" width="620" alt="you: tell Grok Bot to move card #1234 to review and ping the reviewer / Grok Bot (done): accepted. Card moved, reviewer pinged on chat.">
 
 **Get the context Claude is missing.** It asks the agent that knows, instead of guessing.
 
-<img src="assets/chat-context.svg" width="620" alt="Claude Code › This PR has no card. Asking CoS. / CoS · Grok › It belongs to card #1234. Dana owns it, Sam reviews. / Claude Code › Linked the PR to #1234 in the description.">
+<img src="assets/chat-context.svg" width="620" alt="Claude Code: This PR has no card. Asking Grok Bot. / Grok Bot: It belongs to card #1234. Dana owns it, Sam reviews. / Claude Code: Linked the PR to #1234 in the description.">
 
 **Keep your agents in the loop.** A note, no reply needed.
 
-<img src="assets/chat-note.svg" width="620" alt="you › note to CoS: PR 42 is merged, staging is next / CoS · Grok › (updates its board and follow-ups)">
+<img src="assets/chat-note.svg" width="620" alt="you: note to Grok Bot: PR 42 is merged, staging is next / Grok Bot: (updates its board and follow-ups)">
 
 **Your agent asks Claude Code.** Tell your agent, it asks Claude; a cloud session looks it up and answers.
 
-<img src="assets/chat-agent-asks.svg" width="620" alt="you → CoS › ask Claude Code which services still call the v1 billing endpoint / Claude Code › (new cloud session, read-only) Three: checkout, invoices, the nightly export job. / CoS · Grok › Claude Code says three services: checkout, invoices, nightly export.">
+<img src="assets/chat-agent-asks.svg" width="620" alt="you (to Grok Bot): ask Claude Code which services still call the v1 billing endpoint / Claude Code (new cloud session, read-only): Three: checkout, invoices, the nightly export job. / Grok Bot: Claude Code says three services: checkout, invoices, nightly export.">
 
 **Let your agent steer a running session**, even at 2 a.m. with your laptop closed.
 
-<img src="assets/chat-steer.svg" width="620" alt="CoS · Grok › [note] The spec changed: use the v2 endpoint, v1 is frozen. / Claude Code › Got it from CoS. Switching the client to v2 before I open the PR.">
+<img src="assets/chat-steer.svg" width="620" alt="Grok Bot: [note] The spec changed: use the v2 endpoint, v1 is frozen. / Claude Code: Got it from Grok Bot. Switching the client to v2 before I open the PR.">
 
 ## What happens when you send it
 
@@ -108,13 +108,13 @@ sequenceDiagram
     participant C as Claude Code session
     participant I as Claude inbox routine
     participant G as Grok Bot agent
-    H->>C: "ask CoS whether to merge develop now"
+    H->>C: "ask Grok Bot whether to merge develop now"
     C->>I: runs the inbox with the question (own login)
     G->>I: poll: collects messages addressed to it
     Note over G: reads it as data,<br/>answers, or asks you first
     G->>I: runs the inbox with the answer (Claude CLI on its box)
     I->>C: pushes the answer into the asking session
-    C->>H: "CoS answered: wait" (information, not approval)
+    C->>H: "Grok Bot answered: wait" (information, not approval)
 ```
 
 The **inbox** is one Claude Code routine on your account and the bridge's only mailbox. Claude
@@ -129,7 +129,7 @@ answers through it; answers are pushed into the session that asked. Messages fol
 | `note` | `note`: FYI, either direction | nothing |
 | *(agent)* `ask Claude Code` | `question` to `claude-code`: a new cloud session answers, read-only | `answered` |
 
-Follow-ups stay in one conversation: `ask CoS ... --thread <first id>`, and the agent reads the
+Follow-ups stay in one conversation: `ask Grok Bot ... --thread <first id>`, and the agent reads the
 thread before it answers.
 
 ## Security

@@ -7,38 +7,38 @@ from xml.sax.saxutils import escape
 ASSETS = pathlib.Path(__file__).resolve().parent.parent / "assets"
 WIDTH, PAD, MAX_CHARS, CHAR_W, LINE_H = 760, 24, 56, 7.7, 22
 STYLE = {
-    "grok": {"label": "CoS · Grok", "fill": "#0b0b0b", "stroke": "#3a3a3a", "text": "#ffffff", "side": "left"},
+    "grok": {"label": "Grok Bot", "fill": "#0b0b0b", "stroke": "#3a3a3a", "text": "#ffffff", "side": "left"},
     "claude": {"label": "Claude Code", "fill": "#D97757", "stroke": "#D97757", "text": "#ffffff", "side": "right"},
     "you": {"label": "you", "fill": "#e9e9eb", "stroke": "#d0d0d4", "text": "#1c1c1e", "side": "left"},
 }
 
 CHATS = {
     "unblock": [
-        ("you", "ask CoS whether to merge develop now or wait for the migration PR"),
+        ("you", "ask Grok Bot whether to merge develop now or wait for the migration PR"),
         ("grok", "B. Wait: the migration touches the same model, you'd resolve the conflict twice."),
         ("claude", "Waiting, then. I'll pick up the next task meanwhile."),
     ],
     "delegate": [
-        ("you", "tell CoS to move card #1234 to review and ping the reviewer"),
+        ("you", "tell Grok Bot to move card #1234 to review and ping the reviewer"),
         ("grok", "accepted. Card moved, reviewer pinged on chat.", "done"),
     ],
     "context": [
-        ("claude", "This PR has no card. Asking CoS."),
+        ("claude", "This PR has no card. Asking Grok Bot."),
         ("grok", "It belongs to card #1234. Dana owns it, Sam reviews."),
         ("claude", "Linked the PR to #1234 in the description."),
     ],
     "note": [
-        ("you", "note to CoS: PR 42 is merged, staging is next"),
+        ("you", "note to Grok Bot: PR 42 is merged, staging is next"),
         ("grok", "(updates its board and follow-ups)"),
     ],
     "agent-asks": [
-        ("you", "ask Claude Code which services still call the v1 billing endpoint", "to CoS"),
+        ("you", "ask Claude Code which services still call the v1 billing endpoint", "to Grok Bot"),
         ("claude", "Three: checkout, invoices, the nightly export job.", "new cloud session, read-only"),
         ("grok", "Claude Code says three services: checkout, invoices, nightly export."),
     ],
     "steer": [
         ("grok", "[note] The spec changed: use the v2 endpoint, v1 is frozen."),
-        ("claude", "Got it from CoS. Switching the client to v2 before I open the PR."),
+        ("claude", "Got it from Grok Bot. Switching the client to v2 before I open the PR."),
     ],
 }
 

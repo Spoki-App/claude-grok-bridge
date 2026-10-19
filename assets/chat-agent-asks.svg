@@ -1,13 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="760" height="302" viewBox="0 0 760 302" role="img" aria-label="you: ask Claude Code which services still call the v1 billing endpoint / Claude Code: Three: checkout, invoices, the nightly export job. / CoS · Grok: Claude Code says three services: checkout, invoices, nightly export.">
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="302" viewBox="0 0 760 302" role="img" aria-label="you: ask Claude Code which services still call the v1 billing endpoint / Claude Code: Three: checkout, invoices, the nightly export job. / Grok Bot: Claude Code says three services: checkout, invoices, nightly export.">
 <style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Helvetica,Arial,sans-serif}.b{font-size:15px}.l{font-size:12px;font-weight:600;fill:#8a8a8e;letter-spacing:.02em}</style>
-<text class="l" x="28" y="29" text-anchor="start">you · to CoS</text>
+<text class="l" x="28" y="29" text-anchor="start">you · to Grok Bot</text>
 <rect x="24" y="38" width="463" height="62" rx="16" fill="#e9e9eb" stroke="#d0d0d4"/>
 <text class="b" x="40" y="65" fill="#1c1c1e">ask Claude Code which services still call the v1 billing</text>
 <text class="b" x="40" y="87" fill="#1c1c1e">endpoint</text>
 <text class="l" x="732" y="129" text-anchor="end">Claude Code · new cloud session, read-only</text>
 <rect x="319" y="138" width="417" height="40" rx="16" fill="#D97757" stroke="#D97757"/>
 <text class="b" x="335" y="165" fill="#ffffff">Three: checkout, invoices, the nightly export job.</text>
-<text class="l" x="28" y="207" text-anchor="start">CoS · Grok</text>
+<text class="l" x="28" y="207" text-anchor="start">Grok Bot</text>
 <rect x="24" y="216" width="432" height="62" rx="16" fill="#0b0b0b" stroke="#3a3a3a"/>
 <text class="b" x="40" y="243" fill="#ffffff">Claude Code says three services: checkout, invoices,</text>
 <text class="b" x="40" y="265" fill="#ffffff">nightly export.</text>
