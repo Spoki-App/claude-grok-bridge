@@ -145,10 +145,12 @@ def remote_actions(stdout):
             event = json.loads(line)
         except ValueError:
             continue
-        content = ((event.get("message") or {}).get("content") or []) if isinstance(event, dict) else []
+        message = event.get("message") if isinstance(event, dict) else None
+        content = message.get("content") if isinstance(message, dict) else None
         for item in content if isinstance(content, list) else []:
             if isinstance(item, dict) and item.get("type") == "tool_use" and item.get("name") == "RemoteTrigger":
-                actions.append(str((item.get("input") or {}).get("action")))
+                tool_input = item.get("input")
+                actions.append(str(tool_input.get("action") if isinstance(tool_input, dict) else tool_input))
     return actions
 
 

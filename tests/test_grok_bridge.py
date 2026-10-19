@@ -180,6 +180,12 @@ class PollTests(Base):
         doc = (GROK.parent / "claude" / "inbox.md").read_text()
         self.assertEqual(bridge.extract_messages([doc, " ".join(doc.split())]), [])
 
+    def test_audit_survives_events_whose_message_is_text(self):
+        events = "\n".join([json.dumps({"type": "system", "message": "Claude Code started"}),
+                            json.dumps({"type": "assistant", "message": {"content": "plain text"}}),
+                            tool_use_line("RemoteTrigger", {"action": "list_runs"})])
+        self.assertEqual(bridge.remote_actions(events), ["list_runs"])
+
     def test_extract_ignores_garbage(self):
         strings = ["BRIDGE_MESSAGE - x", 'BRIDGE_MESSAGE {"protocol": "claude-grok-bridge/1", broken', "BRIDGE_MESSAGE " + json.dumps(QUESTION) + " tail"]
         self.assertEqual([m["id"] for m in bridge.extract_messages(strings)], ["q-1"])

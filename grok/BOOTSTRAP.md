@@ -46,7 +46,9 @@ curl -fsSL https://github.com/francoCosimo95/claude-grok-bridge/releases/latest/
 ```
 
 This installs or updates the Claude Code skill and registers you in zero-touch mode (no secrets).
-Fast lane, only if you can read your webhook routine's URL and Authorization value: pipe
+If you created a new webhook routine in step 2 (or deleted an old one) and cannot read its
+values, add `--no-fast-lane` to that line: the Mac forgets the old webhook. Fast lane, only if
+you can read your webhook routine's URL and Authorization value: pipe
 `{"webhook_url": "...", "authorization": "..."}` into
 `python3 -I ~/.claude/skills/grok-bridge/bridge.py add-peer PEER --name AGENT --stdin`.
 Never put those values in a chat or a message (they stay only in your own tool history). No local exec? **Next step for you:** open the

@@ -9,7 +9,7 @@
   bridge.py hello [--to ava]                      self-test: asks the agent for PONG
   bridge.py send  envelope.json [--to ava]        send a prepared envelope
   bridge.py check [--to ava] | peers | version
-  bridge.py add-peer ava --name Ava [--inbox trig_...] [--inbox-mode | --stdin]
+  bridge.py add-peer ava --name Ava [--inbox trig_...] [--inbox-mode [--no-fast-lane] | --stdin]
   bridge.py drop < envelope.json                  the agent's local exec leaves a message for local sessions
 
 Delivery: if the peer has a webhook (fast lane) it is POSTed and prints "SENT ... via=webhook".
@@ -181,16 +181,21 @@ def validate(env):
 
 # ---------- delivery ----------
 
+def via_inbox(env, raw, target):
+    cloud = bool(os.environ.get("CLAUDE_CODE_REMOTE_SESSION_ID"))
+    tool = "Claude_Code_Remote fire_trigger" if cloud else "RemoteTrigger run"
+    print(f"SEND_VIA_INBOX routine={target['inbox'] or 'FIND:claude-grok-bridge inbox'} id={env['id']} via={tool}")
+    print("BODY " + json.dumps({"text": raw}, ensure_ascii=False))
+
+
 def deliver(env, target):
+    """Fast lane when configured; the inbox otherwise, and whenever the fast lane fails (a deleted or
+    rotated webhook must not lose the message)."""
     if target["inbox"]:
         env.setdefault("reply_to", {}).setdefault("inbox_routine", target["inbox"])
     raw = validate(env)
     if target["mode"] == "inbox":
-        cloud = bool(os.environ.get("CLAUDE_CODE_REMOTE_SESSION_ID"))
-        tool = "Claude_Code_Remote fire_trigger" if cloud else "RemoteTrigger run"
-        print(f"SEND_VIA_INBOX routine={target['inbox'] or 'FIND:claude-grok-bridge inbox'} id={env['id']} via={tool}")
-        print("BODY " + json.dumps({"text": raw}, ensure_ascii=False))
-        return
+        return via_inbox(env, raw, target)
     url, auth = target["url"], target["auth"]
     req = urllib.request.Request(url, data=raw.encode(), method="POST", headers={"Content-Type": "application/json", "Authorization": auth})
     try:
@@ -199,11 +204,14 @@ def deliver(env, target):
     except urllib.error.HTTPError as e:
         status, body = e.code, e.read(2000).decode("utf-8", "replace")
     except (urllib.error.URLError, TimeoutError) as e:
-        fail(3, "NETWORK_ERROR: " + LONG_TOKEN.sub("<redacted>", str(e).replace(url, "<url>")))
+        status, body = 0, "network error: " + str(e)
     body = LONG_TOKEN.sub("<redacted>", body.replace(url, "<url>").replace(auth, "<redacted>")).strip()
-    if not 200 <= status < 300:
-        fail(3, f"HTTP_ERROR {status} id={env['id']} {body}")
-    print(f"SENT id={env['id']} to={target['peer']} via=webhook (HTTP {status})")
+    if 200 <= status < 300:
+        print(f"SENT id={env['id']} to={target['peer']} via=webhook (HTTP {status})")
+        return
+    print(f"FAST_LANE_FAILED {status or 'network'} {body[:200]}: sending through the inbox instead. "
+          f"If it keeps failing, ask {target['name']} to run the setup line again.")
+    via_inbox(env, raw, target)
 
 
 # ---------- commands ----------
@@ -277,9 +285,12 @@ def cmd_add_peer(args):
     name = args.name or args.peer
     existing = (cfg.get("peers") or {}).get(args.peer) or {}
     if args.inbox_mode:
-        entry = {**existing, "name": name} if existing.get("webhook_url") else {"name": name, "mode": "inbox"}
-        if existing.get("webhook_url"):
+        keep = existing.get("webhook_url") and not args.no_fast_lane
+        entry = {**existing, "name": name} if keep else {"name": name, "mode": "inbox"}
+        if keep:
             print(f"Kept the existing fast lane for '{args.peer}'.")
+        elif existing.get("webhook_url"):
+            print(f"Removed the fast lane for '{args.peer}': messages go through the inbox.")
     else:
         url, auth = read_secrets(name) if not args.stdin else stdin_secrets()
         entry = {"name": name, "webhook_url": url, "authorization": auth}
@@ -413,6 +424,7 @@ def main():
     mode = p.add_mutually_exclusive_group()
     mode.add_argument("--inbox-mode", action="store_true", help="zero-touch, no secrets")
     mode.add_argument("--stdin", action="store_true", help='fast lane from JSON on stdin: {"webhook_url", "authorization"}')
+    p.add_argument("--no-fast-lane", action="store_true", help="with --inbox-mode: forget a webhook that no longer exists")
     p.set_defaults(func=cmd_add_peer)
     args = ap.parse_args()
     args.func(args)

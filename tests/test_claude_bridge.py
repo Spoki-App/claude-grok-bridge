@@ -139,12 +139,15 @@ class SendTests(Base):
         self.assertEqual(code, 4)
         self.assertIn("key=value", out)
 
-    def test_http_error(self):
-        self.config({"peers": {"cos": {"webhook_url": URL, "authorization": AUTH}}})
-        with mock.patch.object(bridge.urllib.request, "urlopen", Recorder(status=500)):
-            code, out = run("note", "x", "--to", "cos")
-        self.assertEqual(code, 3)
-        self.assertIn("HTTP_ERROR 500", out)
+    def test_a_dead_fast_lane_falls_back_to_the_inbox(self):
+        self.config({"inbox_routine": "trig_INBOX", "peers": {"cos": {"name": "CoS", "webhook_url": URL, "authorization": AUTH}}})
+        for status in (404, 500):
+            with mock.patch.object(bridge.urllib.request, "urlopen", Recorder(status=status)):
+                code, out = run("note", "x", "--to", "cos")
+            self.assertEqual(code, 0, "a deleted webhook routine must not lose the message")
+            self.assertIn(f"FAST_LANE_FAILED {status}", out)
+            self.assertIn("SEND_VIA_INBOX routine=trig_INBOX", out)
+            self.assertNotIn(AUTH.split()[-1], out)
 
 
 class ValidateTests(unittest.TestCase):
@@ -192,6 +195,12 @@ class AddPeerTests(unittest.TestCase):
         res = self.add("", "cos", "--name", "CoS", "--inbox-mode")
         self.assertEqual(self.saved()["peers"]["cos"]["webhook_url"], "https://h.test/x")
         self.assertIn("Kept the existing fast lane", res.stdout)
+
+    def test_no_fast_lane_forgets_a_dead_webhook(self):
+        self.add(json.dumps({"webhook_url": "https://h.test/x", "authorization": "Bearer abcdefgh"}), "cos", "--stdin")
+        res = self.add("", "cos", "--name", "CoS", "--inbox-mode", "--no-fast-lane")
+        self.assertEqual(self.saved()["peers"]["cos"], {"name": "CoS", "mode": "inbox"})
+        self.assertIn("Removed the fast lane", res.stdout)
 
     def test_claude_md_learns_the_agent_names_once(self):
         self.claude_md.write_text("# My rules\n\nBe brief.\n")

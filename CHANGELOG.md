@@ -6,6 +6,16 @@ Versioning: [SemVer](https://semver.org/) for the kit. The wire protocol has its
 
 ## [Unreleased]
 
+### Fixed
+- Agent side: the transcript audit crashed when an event's `message` was text, not an object
+  (reported by CoS during the 0.9.1 setup).
+- Claude side: if the fast lane fails (for example its webhook routine was deleted), the message
+  goes through the inbox instead of failing (`FAST_LANE_FAILED ...` then `SEND_VIA_INBOX`).
+
+### Added
+- `add-peer --inbox-mode --no-fast-lane` forgets a webhook that no longer exists; the setup tells
+  the agent to use it when it recreated its webhook routine and cannot read the new values.
+
 ### Verified
 - The channel works live: with the development flag, a message left by `bridge.py drop`
   appears in an open terminal session within seconds (Claude Team org, Claude Code 2.1.303).
