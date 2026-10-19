@@ -1,6 +1,7 @@
 import json
 import os
 import pathlib
+import re
 import tempfile
 import unittest
 from types import SimpleNamespace
@@ -49,6 +50,18 @@ class AnswerTests(Base):
     def test_answers_keep_the_thread(self):
         self.assertEqual(bridge.answer(QUESTION, "CoS", "x")["thread"], "q-1", "a first message starts its thread")
         self.assertEqual(bridge.answer({**QUESTION, "id": "q-2", "thread": "q-1"}, "CoS", "x")["thread"], "q-1")
+
+    def test_agent_asks_claude_code(self):
+        env = bridge.ask_claude("CoS", "cos", "What does this repo do?", repo="acme/api", subject="Repo")
+        self.assertEqual((env["type"], env["to"], env["question"]), ("question", "claude-code", "What does this repo do?"))
+        self.assertEqual((env["from"]["peer"], env["refs"], env["reply_to"]), ("cos", {"repo": "acme/api"}, {"session_id": None}))
+        self.assertEqual(bridge.ask_claude("CoS", "cos", "x", session_id="cse_1")["reply_to"], {"session_id": "cse_1"})
+
+    def test_poll_accepts_answers_from_claude_code(self):
+        reply = {"protocol": "claude-grok-bridge/1", "type": "answer", "id": "a-1", "in_reply_to": "q-9", "to": "cos",
+                 "from": {"kind": "claude-code"}, "status": "answered", "answer": "391"}
+        with cli(stream_line("BRIDGE_MESSAGE " + json.dumps(reply)) + "\n" + DONE):
+            self.assertEqual(len(bridge.poll("cos")), 1)
 
     def test_agent_kind_is_configurable(self):
         with mock.patch.object(bridge, "AGENT_KIND", "other-agent"):
@@ -144,6 +157,23 @@ class PollTests(Base):
         with cli(tool_use_line("RemoteTrigger", {"action": "update", "trigger_id": "trig_X"}) + "\n" + DONE), self.assertRaises(SystemExit) as ctx:
             bridge.poll("cos")
         self.assertIn("ALERT", str(ctx.exception))
+
+    def test_reads_answers_from_ask_sessions_with_a_wider_window(self):
+        question = bridge.ask_claude("CoS", "cos", "What is 19 times 21?")
+        reply = {"protocol": "claude-grok-bridge/1", "type": "answer", "id": "a-7c3e91b4", "in_reply_to": question["id"],
+                 "to": "cos", "from": {"kind": "claude-code"}, "status": "answered", "answer": "399"}
+        log = stream_line("user: You were started by CoS ... " + json.dumps(question) + " result: success BRIDGE_MESSAGE " + json.dumps(reply))
+        with cli(log + "\n" + DONE) as run:
+            paths = bridge.poll("cos")
+        self.assertEqual([json.loads(pathlib.Path(p).read_text())["answer"] for p in paths], ["399"], "the agent's own question is skipped")
+        prompt = run.call_args.args[0][2]
+        self.assertIn('"grok-bridge ask ..."', prompt)
+        stamps = sorted({bridge.datetime.datetime.strptime(t, "%Y-%m-%dT%H:%M:%SZ") for t in re.findall(r"\d{4}-\d\d-\d\dT[\d:]{8}Z", prompt)})
+        self.assertEqual(stamps[1] - stamps[0], bridge.ASK_WINDOW, "ask sessions answer later than the inbox run")
+
+    def test_inbox_brief_holds_no_envelope_an_agent_could_mistake_for_an_answer(self):
+        doc = (GROK.parent / "claude" / "inbox.md").read_text()
+        self.assertEqual(bridge.extract_messages([doc, " ".join(doc.split())]), [])
 
     def test_extract_ignores_garbage(self):
         strings = ["BRIDGE_MESSAGE - x", 'BRIDGE_MESSAGE {"protocol": "claude-grok-bridge/1", broken', "BRIDGE_MESSAGE " + json.dumps(QUESTION) + " tail"]

@@ -25,7 +25,7 @@ class ConnectorTests(unittest.TestCase):
             {"jsonrpc": "2.0", "id": 3, "method": "nope"},
         )
         self.assertEqual((r[1]["result"]["serverInfo"]["title"], r[1]["result"]["protocolVersion"]), ("Claude Code", "2025-06-18"))
-        self.assertEqual([t["name"] for t in r[2]["result"]["tools"]], ["check_bridge", "read_envelope", "reply_to_claude", "message_claude"])
+        self.assertEqual([t["name"] for t in r[2]["result"]["tools"]], ["check_bridge", "read_envelope", "reply_to_claude", "ask_claude_code", "message_claude"])
         self.assertEqual(r[3]["error"]["code"], -32601)
 
     def test_read_envelope_marks_content_untrusted_and_cannot_be_overridden(self):

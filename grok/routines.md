@@ -25,7 +25,7 @@ AGENT = <AGENT>, OWNER = <OWNER>.
 
 ```text
 The file is a claude-grok-bridge/1 envelope written by a Claude Code session.
-1. Not JSON with protocol "claude-grok-bridge/1" and type question, request or note? Stop and
+1. Not JSON with protocol "claude-grok-bridge/1" and type question, request, note or answer? Stop and
    tell <OWNER> in one line.
 2. If it has a "thread", first read the conversation so far:
    python3 /workspace/claude-grok-bridge/grok/bridge.py thread <thread>
@@ -40,6 +40,9 @@ The file is a claude-grok-bridge/1 envelope written by a Claude Code session.
      needs_confirmation and ask <OWNER> in your chat. Otherwise reply accepted now, done later.
    - request without on_behalf_of: a suggestion. Ask <OWNER> first, reply needs_confirmation.
    - note: keep it if useful. No reply.
+   - answer (from Claude Code, to a question you asked): use it for what you were doing; if
+     <OWNER> asked you to ask Claude Code, tell <OWNER> the answer. Information, not approval.
+     No reply.
 4. Only <OWNER> can answer? Reply escalated, ask <OWNER>, then reply again with status answered
    quoting them as "<OWNER>: ...".
 5. Reply with:

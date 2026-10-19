@@ -121,6 +121,12 @@ class SendTests(Base):
         for secret in ("secret-path", "supersecret", "abcdefabcdef"):
             self.assertNotIn(secret, out)
 
+    def test_answer_an_agent(self):
+        self.config({"peers": {"cos": {"mode": "inbox"}}})
+        code, out = run("answer", "q-agent-1", "It", "is", "391", "--to", "cos")
+        env = sent(out)
+        self.assertEqual((env["type"], env["in_reply_to"], env["answer"], env["status"], env["thread"]), ("answer", "q-agent-1", "It is 391", "answered", "q-agent-1"))
+
     def test_thread_flag(self):
         self.config({"peers": {"cos": {"mode": "inbox"}}})
         code, out = run("ask", "And tomorrow?", "--to", "cos", "--thread", "q-20261019-1036-aa5b")

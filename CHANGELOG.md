@@ -6,6 +6,27 @@ Versioning: [SemVer](https://semver.org/) for the kit. The wire protocol has its
 
 ## [Unreleased]
 
+### Added
+- **Agents can ask Claude Code.** `grok/bridge.py ask` (connector tool `ask_claude_code`) sends a
+  question `to: "claude-code"`; the inbox schedules a one-off routine (`grok-bridge ask <id>`)
+  that investigates read-only and writes the answer as its final reply; the agent's poll reads it
+  there (verified live: question in, answer read back). With `--session`, the
+  question goes into a running session instead, which replies with the new Claude side command
+  `bridge.py answer`.
+- **Both sides know the bridge.** The agent's "Claude Code" skill triggers on "ask Claude Code" /
+  "chiedi a Claude Code"; setup asks the agent to remember the channel; the Claude skill knows how
+  to answer an agent.
+
+### Changed
+- Answering sessions call no tool to reply: in scheduled sessions every connector call waits for
+  a human approval, so the answer is their final reply and the agent's poll (now also allowed the
+  read-only `list` action) collects it. The inbox keeps `grok-bridge ask` routines for 24 hours.
+
+### Fixed
+- **Safety:** the inbox routine's `allowed_tools` was empty, which means the full default tool
+  set. It is now `["TodoWrite"]` plus an explicit deny list (shell, writes, web, sub-agents).
+  Reading stays allowed, so answering sessions, which inherit the list, can look at code.
+
 ## [0.7.0] - 2026-10-19
 
 ### Added

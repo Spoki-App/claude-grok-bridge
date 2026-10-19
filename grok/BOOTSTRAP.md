@@ -61,9 +61,14 @@ Terminal app, paste the line above, press Enter.
 3. Fast lane configured? Also run on the Mac
    `python3 -I ~/.claude/skills/grok-bridge/bridge.py hello --to PEER` and answer that PONG.
 
+**Remember the bridge.** Add to your own standing instructions or memory, in one line: "I can
+talk with my owner's Claude Code through claude-grok-bridge: to ask Claude Code something, use
+the Claude Code plugin (`ask_claude_code`) or `bridge.py ask`." Then when your owner says
+"ask Claude Code ...", you know how.
+
 ## Step 5 of 5: report
 
 "Bridge ready (version X.Y.Z). Claude Code reaches me within N minutes" (N = your poll interval;
-add "or seconds through the fast lane" if set). Then two examples to type in Claude Code:
-`ask AGENT whether ...`, `tell AGENT to ...`. End with **Nothing to do, the bridge is ready.**
+add "or seconds through the fast lane" if set). Then three examples: in Claude Code
+`ask AGENT whether ...` and `tell AGENT to ...`; and to you, "ask Claude Code ...". End with **Nothing to do, the bridge is ready.**
 If a step failed: which one, why, and the one next step.

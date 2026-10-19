@@ -11,6 +11,7 @@ automation endpoints. No relay server, no queue, no shared database.
 | Claude Code → agent (optional fast lane) | the agent's **webhook** routine | that routine's URL and key, `chmod 600` on the Mac |
 | Agent → Claude Code | the same **inbox**, run by the Claude CLI on the agent's box (or the routine fire API) | the box's Claude login, or a token scoped to the inbox |
 | Inbox → asking cloud session | a one-off session reminder | none, inside the Claude account |
+| Agent's question → Claude Code | a one-off routine `grok-bridge ask <id>` scheduled by the inbox; its final reply is the answer, read by the agent's poll | none, inside the Claude account |
 
 The inbox logs every message as `BRIDGE_MESSAGE <envelope>` and pushes only messages **from an
 agent** (any `from.kind` other than `claude-code`) into a session. Senders verify delivery: the run log must hold the envelope id inside
@@ -55,9 +56,10 @@ Its answer:
 
 | Field | Rule |
 |---|---|
-| `type` | `question`, `request`, `note` (from Claude Code); `answer`, `note` (from an agent) |
+| `type` | `question`, `request`, `note`, `answer` (from Claude Code); `question`, `note`, `answer` (from an agent) |
 | body | `question`, `request`, `note` or `answer`, named like the type |
-| `to` | the agent's peer key (lowercase); agents collect only messages addressed to them |
+| `to` | the agent's peer key (lowercase), or `claude-code` when an agent starts a conversation: the inbox schedules a cloud session that answers read-only, in its final reply |
+| `from.peer` | on messages from an agent: its peer key, so Claude Code can answer it |
 | `on_behalf_of`, `owner_words` | only on a `request` the human typed: `"owner"` and their exact words |
 | `status` | `answered`, `accepted`, `escalated`, `needs_confirmation`, `done`, `declined` |
 | `reply_to.session_id` | the asking cloud session, so the answer is pushed into it |

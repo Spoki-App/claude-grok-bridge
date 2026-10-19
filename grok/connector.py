@@ -10,7 +10,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from bridge import PROTOCOL, STATUSES, answer, check, deliver, outbound, version  # noqa: E402
+from bridge import PROTOCOL, STATUSES, answer, ask_claude, check, deliver, outbound, version  # noqa: E402
 
 PROTOCOL_VERSIONS = ["2025-06-18", "2025-03-26", "2024-11-05"]
 STRING = {"type": "string"}
@@ -23,6 +23,9 @@ TOOLS = [
      "inputSchema": {"type": "object", "required": ["in_reply_to", "agent", "answer"], "properties": {
          "in_reply_to": STRING, "agent": STRING, "answer": STRING, "session_id": STRING,
          "status": {"type": "string", "enum": STATUSES, "default": "answered"}}}},
+    {"name": "ask_claude_code", "description": "Ask Claude Code a question (\"ask Claude Code ...\", \"chiedi a Claude Code ...\"). A new cloud session investigates read-only and answers; its answer reaches you on your next poll. Pass session_id to ask a session that is already running.",
+     "inputSchema": {"type": "object", "required": ["question", "agent", "peer"], "properties": {
+         "question": STRING, "agent": STRING, "peer": STRING, "subject": STRING, "context": STRING, "repo": STRING, "session_id": STRING, "thread": STRING}}},
     {"name": "message_claude", "description": "Send a note to a Claude Code cloud session on your own initiative. It arrives marked as information, not user authorization.",
      "inputSchema": {"type": "object", "required": ["session_id", "agent", "note"], "properties": {"session_id": STRING, "agent": STRING, "note": STRING}}},
 ]
@@ -46,6 +49,9 @@ def call(name, args):
     if name == "reply_to_claude":
         question = {"id": args["in_reply_to"], "reply_to": {"session_id": args.get("session_id") or None}}
         out = deliver(answer(question, args["agent"], args["answer"], args.get("status", "answered")))
+    elif name == "ask_claude_code":
+        out = deliver(ask_claude(args["agent"], args["peer"], args["question"], args.get("session_id"), args.get("subject"),
+                                 args.get("context"), args.get("repo"), args.get("thread")))
     elif name == "message_claude":
         out = deliver(outbound("note", args["agent"], "note", args["note"], args["session_id"]))
     else:

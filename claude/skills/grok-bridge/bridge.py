@@ -5,6 +5,7 @@
   bridge.py tell  "Move card 1234 to review" --owner-words "the user's exact words" [--to cos] [--context ...]
   bridge.py note  "PR 42 is merged" [--to cos]
   (any of them with --thread <first message id> continues a conversation)
+  bridge.py answer Q_ID "text" --to cos [--status answered] [--thread ID]   answer an agent's question
   bridge.py hello [--to cos]                      self-test: asks the agent for PONG
   bridge.py send  envelope.json [--to cos]        send a prepared envelope
   bridge.py check [--to cos] | peers | version
@@ -36,7 +37,8 @@ PROTOCOL = "claude-grok-bridge/1"
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO_URL = "https://github.com/francoCosimo95/claude-grok-bridge"
 DEFAULT_CONFIG = os.path.join(os.path.expanduser("~"), ".config", "grok-bridge", "config.json")
-BODY_FIELD = {"question": "question", "request": "request", "note": "note"}
+BODY_FIELD = {"question": "question", "request": "request", "note": "note", "answer": "answer"}
+STATUSES = ["answered", "accepted", "escalated", "needs_confirmation", "done", "declined"]
 MAX_BYTES = 60_000
 LONG_TOKEN = re.compile(r"[A-Za-z0-9_\-.]{24,}")
 HEADER_PREFIX = re.compile(r"(?i)^\s*authorization\s*:\s*")
@@ -156,10 +158,12 @@ def label():
 def validate(env):
     kind = env.get("type")
     if env.get("protocol") != PROTOCOL or kind not in BODY_FIELD:
-        fail(4, f"ENVELOPE_INVALID: need protocol {PROTOCOL} and type question, request or note")
+        fail(4, f"ENVELOPE_INVALID: need protocol {PROTOCOL} and type question, request, note or answer")
     missing = [k for k in ("id", "from", "to", BODY_FIELD[kind]) if not env.get(k)]
     if missing:
         fail(4, f"ENVELOPE_INVALID: missing {missing}")
+    if kind == "answer" and (env.get("status") not in STATUSES or not env.get("in_reply_to")):
+        fail(4, f"ENVELOPE_INVALID: an answer needs in_reply_to and a status in {STATUSES}")
     if env.get("on_behalf_of") and (kind != "request" or not env.get("owner_words")):
         fail(4, "ENVELOPE_INVALID: on_behalf_of only on a request, with owner_words")
     raw = json.dumps(env, ensure_ascii=False, separators=(",", ":"))
@@ -203,6 +207,14 @@ def cmd_message(args, kind):
     if kind == "request" and not args.owner_words:
         fail(4, "tell needs --owner-words with the user's exact words")
     deliver(envelope(kind, text, peer, args), resolve(peer))
+
+
+def cmd_answer(args):
+    peer = args.to or default_peer() or fail(2, "Say which agent: --to <peer>")
+    env = envelope("answer", " ".join(args.text), peer, args)
+    env["in_reply_to"], env["status"] = args.in_reply_to, args.status
+    env["thread"] = args.thread or args.in_reply_to
+    deliver(env, resolve(peer))
 
 
 def cmd_hello(args):
@@ -313,6 +325,13 @@ def main():
         if kind == "request":
             p.add_argument("--owner-words", required=True)
         p.set_defaults(func=lambda a, k=kind: cmd_message(a, k))
+    p = sub.add_parser("answer", help="answer a question an agent sent you")
+    p.add_argument("in_reply_to")
+    p.add_argument("text", nargs="+")
+    p.add_argument("--to")
+    p.add_argument("--status", default="answered", choices=STATUSES)
+    p.add_argument("--thread")
+    p.set_defaults(func=cmd_answer)
     p = sub.add_parser("hello", help="self-test: ask the agent for PONG")
     p.add_argument("--to")
     p.set_defaults(func=cmd_hello)

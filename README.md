@@ -77,6 +77,14 @@ you          ›  note to CoS: PR 42 is merged, staging is next
 CoS · Grok   ›  (updates its board and follow-ups)
 ```
 
+**Your agent asks Claude Code.** Tell your agent, it asks Claude; a cloud session looks it up and answers.
+
+```text
+you → CoS    ›  ask Claude Code which services still call the v1 billing endpoint
+Claude Code  ›  (new cloud session, read-only) Three: checkout, invoices, the nightly export job.
+CoS · Grok   ›  Claude Code says three services: checkout, invoices, nightly export.
+```
+
 **Let your agent steer a running session**, even at 2 a.m. with your laptop closed.
 
 ```text
@@ -140,6 +148,7 @@ answers through it; answers are pushed into the session that asked. Messages fol
 | `ask` | `question`: a decision or context the agent owns | `answered`, or `escalated` while it asks you |
 | `tell` | `request`: a task **you typed**, with your exact words | `accepted` then `done`, or `needs_confirmation` |
 | `note` | `note`: FYI, either direction | nothing |
+| *(agent)* `ask Claude Code` | `question` to `claude-code`: a new cloud session answers, read-only | `answered` |
 
 Follow-ups stay in one conversation: `ask CoS ... --thread <first id>`, and the agent reads the
 thread before it answers.
@@ -168,6 +177,9 @@ Verified on 2026-10-19 with a real Grok Bot agent: questions reached the agent i
 through the fast lane, it answered in about 15 s, the answer was in the Claude inbox about 30 s
 after the question, and push into a cloud session took 1 to 2 minutes. Zero-touch sending
 (through the inbox and the agent's poll) is new in 0.5.0; its end-to-end check is in progress.
+The other direction (an agent asks Claude Code) was verified on the Claude side the same day: the
+inbox scheduled an answering session that replied correctly about 2 minutes after the question,
+with no approval needed; scheduled runs can start a few minutes late.
 
 Claude Code routines are a research preview; session push relies on reminders that work but are
 not in the public docs, with the inbox log as the documented fallback. Each message is a short
