@@ -215,7 +215,13 @@ the inbox pushes answers from any agent kind. Grok Bot is the first verified pee
 - [x] Instant answers in local terminal sessions through a Claude Code channel (experimental)
 - [ ] A second verified agent platform
 
-Ideas: [Discussions](https://github.com/francoCosimo95/claude-grok-bridge/discussions).
+Next, each tracked as an issue:
+- [ ] Scheduled end-to-end smoke test ([#1](https://github.com/francoCosimo95/claude-grok-bridge/issues/1)) and a clear list of the preview features it relies on ([#5](https://github.com/francoCosimo95/claude-grok-bridge/issues/5))
+- [ ] Stable interface and a 1.0 after weeks of real use ([#2](https://github.com/francoCosimo95/claude-grok-bridge/issues/2))
+- [ ] Answers in under a minute ([#6](https://github.com/francoCosimo95/claude-grok-bridge/issues/6)), signed owner requests ([#7](https://github.com/francoCosimo95/claude-grok-bridge/issues/7)), less logic in the inbox prompt ([#8](https://github.com/francoCosimo95/claude-grok-bridge/issues/8))
+- [ ] Demo of the round trip ([#3](https://github.com/francoCosimo95/claude-grok-bridge/issues/3)) and an unambiguous name ([#4](https://github.com/francoCosimo95/claude-grok-bridge/issues/4))
+
+All open work: [issues](https://github.com/francoCosimo95/claude-grok-bridge/issues). Ideas: [Discussions](https://github.com/francoCosimo95/claude-grok-bridge/discussions).
 Contributing: [CONTRIBUTING.md](CONTRIBUTING.md) (layout, tests, the five pillars).
 
 ## License
