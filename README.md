@@ -4,8 +4,7 @@
 
 **Your Claude Code sessions and your Grok Bot agents, finally on speaking terms.**
 
-Ask a Grok agent from Claude Code, hand it a task, get the answer back in your session.
-Native endpoints on both sides. Nothing in the middle. One line to set up.
+No servers. No API keys to copy. No glue code. Just one message.
 
 [![CI](https://github.com/francoCosimo95/claude-grok-bridge/actions/workflows/ci.yml/badge.svg)](https://github.com/francoCosimo95/claude-grok-bridge/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/francoCosimo95/claude-grok-bridge?sort=semver)](https://github.com/francoCosimo95/claude-grok-bridge/releases)
@@ -13,7 +12,7 @@ Native endpoints on both sides. Nothing in the middle. One line to set up.
 [![Protocol](https://img.shields.io/badge/protocol-claude--grok--bridge%2F1-111)](PROTOCOL.md)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)](#faq)
 
-[Quickstart](#quickstart) · [How it works](#how-it-works) · [Protocol](PROTOCOL.md) · [Security](#security) · [FAQ](#faq) · [Contributing](CONTRIBUTING.md)
+[Get started](#all-you-have-to-do-is-send-this-to-your-grok-agent) · [How it works](#how-it-works) · [Protocol](PROTOCOL.md) · [Security](#security) · [FAQ](#faq) · [Contributing](CONTRIBUTING.md)
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/hero-dark.svg">
@@ -22,9 +21,27 @@ Native endpoints on both sides. Nothing in the middle. One line to set up.
 
 </div>
 
+## All you have to do is send this to your Grok agent
+
+```text
+Set up the Claude Code bridge: follow https://github.com/francoCosimo95/claude-grok-bridge/blob/main/grok/BOOTSTRAP.md
+```
+
+**That's it.** Your agent installs everything on both sides, wires itself to Claude Code, runs a
+self-test, and comes back with **"Bridge ready"**. In the usual setup you don't type a command, paste a key or touch
+a config file. Want the latest version later? Send the same line again.
+
+From then on, in any Claude Code session, you just talk:
+
+```text
+ask CoS whether we should ship the billing fix today
+tell CoS to move card #1234 to review and ping the reviewer
+did CoS answer?
+```
+
 | **Easy** | **Compact** | **Clear** | **Safe** | **Fast** |
 |---|---|---|---|---|
-| One line to your agent. You type nothing else. | Two small scripts, zero dependencies. | `ask`, `tell`, `note`. One name per thing. | Messages are data. Answers are not approvals. No secrets in chats. | Answers in ~30 s, pushed into the session that asked. |
+| One line to your agent. Nothing else to type. | Two small scripts, zero dependencies. | `ask`, `tell`, `note`. One name per thing. | Messages are data. Answers are not approvals. No secrets in chats. | Answers in ~30 s, pushed into the session that asked. |
 
 ## See it in action
 
@@ -41,26 +58,16 @@ CoS · Grok   ›  B. Wait for the migration PR: merging now means resolving the
 Claude Code  ›  CoS recommends waiting. That is information, not approval: pause this branch?
 ```
 
-## Quickstart
+## What happens when you send it
 
-Send your Grok Bot agent one line:
+Your agent follows [`grok/BOOTSTRAP.md`](grok/BOOTSTRAP.md) and keeps you posted ("Step N of 5"):
 
-```text
-Set up the Claude Code bridge: follow https://github.com/francoCosimo95/claude-grok-bridge/blob/main/grok/BOOTSTRAP.md
-```
-
-The agent does the rest and reports "Step N of 5": it installs itself, creates your Claude inbox
-routine through the Claude CLI on its box, creates its polling routine and a **"Claude Code"**
-plugin, installs the `grok-bridge` skill on your Mac, runs a `PONG` self-test, and tells you
-**"Bridge ready"**. The same line updates everything later.
-
-Then in Claude Code, just talk:
-
-```text
-ask CoS whether we should ship the billing fix today
-tell CoS to move card #1234 to review and ping the reviewer
-did CoS answer?
-```
+1. installs the bridge on its box and creates your Claude **inbox** routine, through the Claude
+   CLI already signed in there;
+2. creates its polling routine and a **"Claude Code"** plugin you'll see in its plugins;
+3. installs the `grok-bridge` skill on your Mac, through Grok Bot's local exec;
+4. sends itself a test question and answers `PONG` back into Claude;
+5. says **"Bridge ready"**, and how fast it picks up messages.
 
 <details>
 <summary>What the agent needs, and the rare fallbacks</summary>
