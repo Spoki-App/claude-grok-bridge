@@ -47,6 +47,11 @@ class AnswerTests(Base):
         self.assertEqual(env["reply_to"], {"session_id": "cse_1"})
         self.assertEqual(env["from"], {"kind": "grok-bot", "agent": "CoS", "version": bridge.version()})
 
+    def test_answers_carry_the_a2a_state(self):
+        states = {s: bridge.answer(QUESTION, "Ava", "x", s)["state"] for s in bridge.STATUSES}
+        self.assertEqual(states["declined"], "TASK_STATE_REJECTED")
+        self.assertEqual(states["needs_confirmation"], "TASK_STATE_INPUT_REQUIRED")
+
     def test_answers_keep_the_thread(self):
         self.assertEqual(bridge.answer(QUESTION, "CoS", "x")["thread"], "q-1", "a first message starts its thread")
         self.assertEqual(bridge.answer({**QUESTION, "id": "q-2", "thread": "q-1"}, "CoS", "x")["thread"], "q-1")

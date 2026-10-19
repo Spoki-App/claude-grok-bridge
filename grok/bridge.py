@@ -3,12 +3,12 @@
 
   bridge.py setup [--inbox trig_...]      find or create the Claude inbox routine, keep its prompt current
   bridge.py check | version
-  bridge.py poll --peer cos               new messages for you: prints a JSON list of envelope files
-  bridge.py reply ENVELOPE_FILE --agent CoS --text "..." [--status answered]
-  bridge.py ask "question" --agent CoS --peer cos [--repo org/name] [--session ID] [--thread ID]
+  bridge.py poll --peer ava               new messages for you: prints a JSON list of envelope files
+  bridge.py reply ENVELOPE_FILE --agent Ava --text "..." [--status answered]
+  bridge.py ask "question" --agent Ava --peer ava [--repo org/name] [--session ID] [--thread ID]
                                           ask Claude Code: a new cloud session answers, or the session ID
-  bridge.py note SESSION_ID --agent CoS --text "..."      message a Claude Code cloud session
-  bridge.py self-test --peer cos          drop a PONG question for yourself in the inbox
+  bridge.py note SESSION_ID --agent Ava --text "..."      message a Claude Code cloud session
+  bridge.py self-test --peer ava          drop a PONG question for yourself in the inbox
   bridge.py thread ID                     the saved messages of a conversation, oldest first
 
 Everything goes through the owner's Claude inbox routine, run with the Claude CLI signed in on this
@@ -30,7 +30,11 @@ import urllib.error
 import urllib.request
 
 PROTOCOL = "claude-grok-bridge/1"
-STATUSES = ["answered", "accepted", "escalated", "needs_confirmation", "done", "declined"]
+A2A_STATE = {  # each status as an A2A TaskState, sent as "state" so A2A tools can read answers
+    "answered": "TASK_STATE_COMPLETED", "done": "TASK_STATE_COMPLETED", "accepted": "TASK_STATE_WORKING",
+    "escalated": "TASK_STATE_WORKING", "needs_confirmation": "TASK_STATE_INPUT_REQUIRED", "declined": "TASK_STATE_REJECTED",
+}
+STATUSES = list(A2A_STATE)
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 INBOX_DOC = os.path.join(ROOT, "claude", "inbox.md")
@@ -214,9 +218,10 @@ def deliver(env):
         sys.exit(f"envelope too large ({len(text)} chars, max {MAX_TEXT})")
     routine, token = inbox_routine(), os.environ.get("CLAUDE_BRIDGE_INBOX_TOKEN")
     ok, detail = fire_with_token(routine, token, text) if token else fire_with_cli(routine, text)
+    out = {"delivered": ok, "id": env["id"], "detail": detail}
     if ok:
-        archive(env)
-    return {"delivered": ok, "id": env["id"], "detail": detail}
+        out["file"] = archive(env)
+    return out
 
 
 def archive(env):
@@ -270,7 +275,8 @@ def answer(question, agent, text, status="answered"):
         sys.exit("empty answer")
     session = (question.get("reply_to") or {}).get("session_id")
     thread = question.get("thread") or question["id"]
-    return outbound("answer", agent, "answer", text, session, in_reply_to=question["id"], status=status, thread=thread)
+    return outbound("answer", agent, "answer", text, session, in_reply_to=question["id"], status=status,
+                    state=A2A_STATE[status], thread=thread)
 
 
 # ---------- poll ----------

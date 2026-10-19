@@ -126,6 +126,7 @@ class SendTests(Base):
         code, out = run("answer", "q-agent-1", "It", "is", "391", "--to", "cos")
         env = sent(out)
         self.assertEqual((env["type"], env["in_reply_to"], env["answer"], env["status"], env["thread"]), ("answer", "q-agent-1", "It is 391", "answered", "q-agent-1"))
+        self.assertEqual(env["state"], "TASK_STATE_COMPLETED", "A2A tools read the state")
 
     def test_thread_flag(self):
         self.config({"peers": {"cos": {"mode": "inbox"}}})
@@ -165,10 +166,12 @@ class ValidateTests(unittest.TestCase):
 
 class AddPeerTests(unittest.TestCase):
     def setUp(self):
-        self.cfg = os.path.join(tempfile.mkdtemp(), "sub", "config.json")
+        tmp = tempfile.mkdtemp()
+        self.cfg = os.path.join(tmp, "sub", "config.json")
+        self.claude_md = pathlib.Path(tmp, "CLAUDE.md")
 
     def add(self, stdin, *args):
-        env = {**os.environ, "GROK_BRIDGE_CONFIG": self.cfg}
+        env = {**os.environ, "GROK_BRIDGE_CONFIG": self.cfg, "GROK_BRIDGE_CLAUDE_MD": str(self.claude_md)}
         return subprocess.run([sys.executable, "-I", str(SKILL / "bridge.py"), "add-peer", *args], input=stdin, capture_output=True, text=True, env=env)
 
     def saved(self):
@@ -189,6 +192,16 @@ class AddPeerTests(unittest.TestCase):
         res = self.add("", "cos", "--name", "CoS", "--inbox-mode")
         self.assertEqual(self.saved()["peers"]["cos"]["webhook_url"], "https://h.test/x")
         self.assertIn("Kept the existing fast lane", res.stdout)
+
+    def test_claude_md_learns_the_agent_names_once(self):
+        self.claude_md.write_text("# My rules\n\nBe brief.\n")
+        self.add("", "cos", "--name", "CoS", "--inbox-mode")
+        self.add("", "ava", "--name", "Ava", "--inbox-mode")
+        self.add("", "ava", "--name", "Ava", "--inbox-mode")
+        text = self.claude_md.read_text()
+        self.assertTrue(text.startswith("# My rules\n\nBe brief.\n"), "the user's own rules stay untouched")
+        self.assertEqual(text.count("<!-- grok-bridge:agents -->"), 1)
+        self.assertIn("Ava (`--to ava`), CoS (`--to cos`)", text)
 
     def test_rejects_plain_http(self):
         self.assertNotEqual(self.add(json.dumps({"webhook_url": "http://h.test", "authorization": "Bearer abcdefgh"}), "cos", "--stdin").returncode, 0)

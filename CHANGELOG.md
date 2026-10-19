@@ -6,6 +6,19 @@ Versioning: [SemVer](https://semver.org/) for the kit. The wire protocol has its
 
 ## [Unreleased]
 
+### Added
+- **A2A vocabulary.** Answers carry `state`, the `status` as an A2A `TaskState`
+  (`TASK_STATE_COMPLETED`, `TASK_STATE_WORKING`, `TASK_STATE_INPUT_REQUIRED`,
+  `TASK_STATE_REJECTED`); `thread` is the A2A `contextId`. Mapping in PROTOCOL.md.
+- **No double delivery.** The inbox names push and ask triggers by the message's own id and
+  skips a message it already delivered (`BRIDGE_PUSH: duplicate ...`), so sender retries are safe.
+  Two answers to one question (accepted, then done) both arrive.
+- **Agents by any name.** `add-peer` keeps a marked block in `~/.claude/CLAUDE.md` naming your
+  agents, so "ask Ava" (whatever you named it) reaches the skill in every session. Examples are generic.
+- **Channel (experimental).** A Claude Code channel in the plugin: the agent drops its answer on
+  your Mac (`bridge.py drop`, through local exec) and an open terminal session shows it at once.
+  Needs the channels development flag during the research preview; not yet verified live.
+
 ### Changed
 - README use cases are chat images (Grok black, Claude orange), generated from
   `scripts/chats.py`; a test keeps them in sync.

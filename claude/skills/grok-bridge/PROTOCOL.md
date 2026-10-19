@@ -11,6 +11,7 @@ automation endpoints. No relay server, no queue, no shared database.
 | Claude Code → agent (optional fast lane) | the agent's **webhook** routine | that routine's URL and key, `chmod 600` on the Mac |
 | Agent → Claude Code | the same **inbox**, run by the Claude CLI on the agent's box (or the routine fire API) | the box's Claude login, or a token scoped to the inbox |
 | Inbox → asking cloud session | a one-off session reminder | none, inside the Claude account |
+| Agent → local session (optional, faster) | `bridge.py drop` on the owner's Mac through the agent's local exec, read by the `grok-bridge` channel | the Mac's own file permissions |
 | Agent's question → Claude Code | a one-off routine `grok-bridge ask <id>` scheduled by the inbox; its final reply is the answer, read by the agent's poll | none, inside the Claude account |
 
 The inbox logs every message as `BRIDGE_MESSAGE <envelope>` and pushes only messages **from an
@@ -27,7 +28,7 @@ One JSON object, UTF-8, at most 60 KB. A question:
   "type": "question",
   "id": "q-20261019-1036-aa5b",
   "from": {"kind": "claude-code", "label": "acme-api @ feat/billing (cloud)", "version": "0.5.0"},
-  "to": "cos",
+  "to": "ava",
   "question": "Merge develop now, or wait for the migration PR?",
   "context": "14 commits behind; the migration PR touches the same model.",
   "options": ["A) merge now", "B) wait"],
@@ -46,7 +47,7 @@ Its answer:
   "type": "answer",
   "id": "a-20261019-103707-1f2e",
   "in_reply_to": "q-20261019-1036-aa5b",
-  "from": {"kind": "grok-bot", "agent": "CoS", "version": "0.5.0"},
+  "from": {"kind": "grok-bot", "agent": "Ava", "version": "0.5.0"},
   "status": "answered",
   "answer": "B. Wait: merging now means resolving the same conflict twice.",
   "reply_to": {"session_id": "session_01..."},
@@ -66,6 +67,22 @@ Its answer:
 | `from.version` | the sender's kit version |
 | `from.kind` | `claude-code`, or the agent's platform (`grok-bot` today; any other value for other platforms) |
 | `thread` | optional: the id of the first message of a conversation; replies keep it |
+| `state` | on answers: the `status` as an [A2A](https://a2a-protocol.org) `TaskState` (table below) |
+
+### A2A mapping
+
+The bridge is not an A2A server, but its answers speak A2A's vocabulary, so A2A tooling can read
+them: `thread` is the A2A `contextId`, a question's `id` is the task id, and `state` is set from
+`status`:
+
+| `status` | `state` | Why |
+|---|---|---|
+| `answered` | `TASK_STATE_COMPLETED` | final answer |
+| `done` | `TASK_STATE_COMPLETED` | the requested work is finished |
+| `accepted` | `TASK_STATE_WORKING` | working on it, more coming |
+| `escalated` | `TASK_STATE_WORKING` | the agent is asking its human; more coming |
+| `needs_confirmation` | `TASK_STATE_INPUT_REQUIRED` | interrupted until the owner confirms; not `AUTH_REQUIRED`, which is about credentials |
+| `declined` | `TASK_STATE_REJECTED` | will not do it |
 
 New optional fields are allowed within `/1`; readers ignore what they do not know. Anything an
 older peer would misread needs `/2`.

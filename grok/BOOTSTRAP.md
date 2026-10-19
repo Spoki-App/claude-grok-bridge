@@ -7,7 +7,7 @@ safe to repeat. Goal: your owner does **nothing**. No copy and paste, no command
 sentences, in their language. End with **Nothing to do, I'm on it.** Only if truly unavoidable,
 end with **Next step for you:** and one concrete action.
 
-Names: `AGENT` is your name (e.g. CoS), `PEER` the same in lowercase, `OWNER` your owner's first
+Names: `AGENT` is your name (e.g. Ava), `PEER` the same in lowercase, `OWNER` your owner's first
 name, `REPO` https://github.com/francoCosimo95/claude-grok-bridge.
 
 ## Step 1 of 5: install or update on your box

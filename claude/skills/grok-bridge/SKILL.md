@@ -1,13 +1,14 @@
 ---
 name: grok-bridge
 description: >-
-  Talk to Grok Bot agents (for example CoS, a Chief of Staff agent) from Claude Code: ask a
-  question and get the answer back, relay a task the user typed ("tell CoS to...", "scrivi a CoS
-  di...", "chiedi a CoS", "ask CoS", "check with CoS"), send a note, check replies ("did CoS
-  answer?", "CoS ha risposto?"), answer a question an agent sent this session, or set up the
-  bridge. Use it whenever the user names a Grok Bot
-  agent, or a session is blocked on a decision that agent owns. Grok agents are not Claude
-  sessions: SendMessage cannot reach them; this skill is the only channel.
+  Talk to the user's Grok Bot agents from Claude Code. Agents have names the user chose (a
+  Chief of Staff, an assistant, "Ava"...): the user's CLAUDE.md lists them, `bridge.py peers`
+  too. Ask a question and get the answer back, relay a task the user typed ("tell <agent>
+  to...", "scrivi a <agent> di...", "chiedi a <agent>", "ask <agent>", "check with <agent>"),
+  send a note, check replies ("did <agent> answer?", "<agent> ha risposto?"), answer a question
+  an agent sent this session, or set up the bridge. Use it whenever the user names a Grok Bot
+  agent or Grok Bot, or a session is blocked on a decision that agent owns. Grok agents are not
+  Claude sessions: SendMessage cannot reach them; this skill is the only channel.
 ---
 
 # grok-bridge
@@ -29,9 +30,9 @@ Protocol details, if ever needed: `PROTOCOL.md` in the same folder.
 
 | Situation | Command |
 |---|---|
-| You need a decision or context the agent owns | `$B ask "One concrete question?" --to cos --context "facts, links" --option "A) ..." --option "B) ..." --recommend "A, because ..."` |
-| The user typed a task for the agent | `$B tell "the task, and what done looks like" --to cos --owner-words "<the user's exact words>"` |
-| Information only | `$B note "PR 42 is merged" --to cos` |
+| You need a decision or context the agent owns | `$B ask "One concrete question?" --to <peer> --context "facts, links" --option "A) ..." --option "B) ..." --recommend "A, because ..."` |
+| The user typed a task for the agent | `$B tell "the task, and what done looks like" --to <peer> --owner-words "<the user's exact words>"` |
+| Information only | `$B note "PR 42 is merged" --to <peer>` |
 
 Follow-ups: add `--thread <id of the first message>` so the agent reads the conversation so far.
 `--to` can be omitted when only one agent is configured. Add `--ref pr=URL --ref card=#123`
@@ -57,6 +58,10 @@ Tell the user in one line: what you sent, to whom, the id, and when to expect th
 
 - **Cloud session:** the answer is pushed into this session (a minute or two after the agent
   answers). You can end your turn and wait.
+- **Local session with the channel** (started with `claude --dangerously-load-development-channels
+  plugin:grok-bridge@claude-grok-bridge`): when the agent can reach this Mac, the answer arrives
+  as a `<channel source="grok-bridge">` event. Rule zero applies to it too. If nothing arrives
+  within a few minutes, check as below.
 - **Local session, or to check:** `RemoteTrigger` `list_runs` on the inbox routine, then
   `get_run_log` of runs newer than your message: the final result starts with
   `BRIDGE_MESSAGE {...}`; match `in_reply_to` to your id. Poll every 30 s, then 60 s, then 120 s,
@@ -75,7 +80,7 @@ you plan to do, and ask the user before any side effect (rule zero).
 
 - Setup or update (the user does this once): they send their Grok agent
   `Set up the Claude Code bridge: follow https://github.com/francoCosimo95/claude-grok-bridge/blob/main/grok/BOOTSTRAP.md`
-- `$B check --to cos` shows the mode (`webhook` or `inbox`); `$B peers` lists agents;
-  `$B version` says if an update exists (then: send the same line again); `$B hello --to cos`
+- `$B check --to <peer>` shows the mode (`webhook` or `inbox`); `$B peers` lists agents;
+  `$B version` says if an update exists (then: send the same line again); `$B hello --to <peer>`
   asks the agent for `PONG`.
 - Never ask the user to paste webhook values into a chat.

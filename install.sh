@@ -1,7 +1,7 @@
 #!/bin/sh
 # claude-grok-bridge: install or update the Claude Code skill on this Mac (latest release).
 #   curl -fsSL https://github.com/francoCosimo95/claude-grok-bridge/releases/latest/download/install.sh | sh
-# Extra arguments register a Grok agent, e.g.: | sh -s -- cos --name CoS --inbox trig_... --inbox-mode
+# Extra arguments register a Grok agent, e.g.: | sh -s -- ava --name Ava --inbox trig_... --inbox-mode
 set -e
 REPO="${CGB_REPO:-https://github.com/francoCosimo95/claude-grok-bridge}"
 DIR="${CGB_DIR:-$HOME/claude-grok-bridge}"

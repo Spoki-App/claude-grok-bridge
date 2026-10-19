@@ -46,6 +46,20 @@ class RepoConsistencyTests(unittest.TestCase):
             self.assertEqual((ROOT / "assets" / f"chat-{name}.svg").read_text(), chats.render(messages), f"run python3 scripts/chats.py ({name})")
             self.assertIn(f"assets/chat-{name}.svg", (ROOT / "README.md").read_text())
 
+    def test_both_sides_map_statuses_to_the_same_a2a_states(self):
+        claude = load(ROOT / "claude" / "skills" / "grok-bridge" / "bridge.py", "claude_side")
+        grok = load(ROOT / "grok" / "bridge.py", "grok_side")
+        self.assertEqual(claude.A2A_STATE, grok.A2A_STATE)
+        for status, state in claude.A2A_STATE.items():
+            self.assertIn(f"`{status}`", (ROOT / "PROTOCOL.md").read_text())
+            self.assertIn(f"`{state}`", (ROOT / "PROTOCOL.md").read_text())
+
+    def test_inbox_dedupes_by_the_envelope_own_id(self):
+        prompt = (ROOT / "claude" / "inbox.md").read_text()
+        self.assertIn("named `grok-bridge reply <id>`", prompt.replace("\n      ", " "))
+        self.assertNotIn("grok-bridge reply <in_reply_to", prompt, "two answers to one question share in_reply_to")
+        self.assertIn("duplicate <trigger id>", prompt)
+
     def test_json_files_parse(self):
         for p in tracked_files():
             if p.suffix == ".json":

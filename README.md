@@ -78,7 +78,8 @@ Your agent follows [`grok/BOOTSTRAP.md`](grok/BOOTSTRAP.md) and keeps you posted
 1. installs the bridge on its box and creates your Claude **inbox** routine, through the Claude
    CLI already signed in there;
 2. creates its polling routine and a **"Claude Code"** plugin you'll see in its plugins;
-3. installs the `grok-bridge` skill on your Mac, through Grok Bot's local exec;
+3. installs the `grok-bridge` skill on your Mac, through Grok Bot's local exec, and notes the
+   agent's name in your `~/.claude/CLAUDE.md` so every session knows it;
 4. sends itself a test question and answers `PONG` back into Claude;
 5. says **"Bridge ready"**, and how fast it picks up messages.
 
@@ -92,6 +93,12 @@ Your agent follows [`grok/BOOTSTRAP.md`](grok/BOOTSTRAP.md) and keeps you posted
   your Mac (`chmod 600`) and messages reach it in about a second instead of its poll interval.
 - **Claude Code plugin.** The agent installs the skill for you; you can also install it yourself:
   `/plugin install grok-bridge --marketplace francoCosimo95/claude-grok-bridge`
+- **Instant answers in a terminal session (experimental).** The plugin includes a Claude Code
+  [channel](https://code.claude.com/docs/en/channels): when the agent can reach your Mac (local
+  exec), its answer appears in your open session at once instead of waiting for a poll. Channels
+  are a research preview: start with
+  `claude --dangerously-load-development-channels plugin:grok-bridge@claude-grok-bridge`, terminal
+  only, and Team or Enterprise orgs need an Owner to enable channels. Not yet verified live.
 - **Cloud sessions** need the plugin enabled for the repository. Add to its `.claude/settings.json`:
   `{"extraKnownMarketplaces": {"claude-grok-bridge": {"source": {"source": "github", "repo": "francoCosimo95/claude-grok-bridge"}}}, "enabledPlugins": {"grok-bridge@claude-grok-bridge": true}}`.
   They send through the inbox with their own login and get answers pushed back. No keys.
@@ -200,6 +207,10 @@ the inbox pushes answers from any agent kind. Grok Bot is the first verified pee
 - [x] Native Claude Code plugin (`/plugin install grok-bridge`), cloud sessions via project settings
 - [x] Threads: multi-turn conversations on one id
 - [x] Platform-neutral agent side (any agent with a shell, a schedule and the Claude CLI)
+- [x] Answers speak A2A (`state` = A2A `TaskState`, `thread` = `contextId`)
+- [x] Retries never deliver twice (the inbox dedupes by message id)
+- [x] Your agents' names, whatever they are, known to every Claude Code session
+- [ ] Instant answers in local sessions through a Claude Code channel (built, live check pending)
 - [ ] A second verified agent platform
 
 Ideas: [Discussions](https://github.com/francoCosimo95/claude-grok-bridge/discussions).

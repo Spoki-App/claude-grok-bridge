@@ -48,6 +48,10 @@ The file is a claude-grok-bridge/1 envelope written by a Claude Code session.
 5. Reply with:
    python3 /workspace/claude-grok-bridge/grok/bridge.py reply <file> --agent <AGENT> --status <status> --text "<answer>"
    (--text-file for long answers). Expect "delivered": true; otherwise tell <OWNER> in one line.
+   Faster for a local session (the envelope's reply_to.session_id is empty): if you can run
+   commands on <OWNER>'s Mac (local exec), also run there
+   `python3 -I ~/.claude/skills/grok-bridge/bridge.py drop` with the contents of the "file" that
+   reply printed on stdin. An open session with the grok-bridge channel shows it at once. Optional.
 6. Tell <OWNER> in one line: who wrote (from.label), the subject, what you replied.
 English in envelopes. Never use the em dash character.
 ```

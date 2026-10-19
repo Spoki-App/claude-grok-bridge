@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 """claude-grok-bridge, Claude Code side. Standard library only.
 
-  bridge.py ask   "Merge develop now?" [--to cos] [--context ...] [--option "A) ..."] [--recommend ...] [--ref pr=URL]
-  bridge.py tell  "Move card 1234 to review" --owner-words "the user's exact words" [--to cos] [--context ...]
-  bridge.py note  "PR 42 is merged" [--to cos]
+  bridge.py ask   "Merge develop now?" [--to ava] [--context ...] [--option "A) ..."] [--recommend ...] [--ref pr=URL]
+  bridge.py tell  "Move card 1234 to review" --owner-words "the user's exact words" [--to ava] [--context ...]
+  bridge.py note  "PR 42 is merged" [--to ava]
   (any of them with --thread <first message id> continues a conversation)
-  bridge.py answer Q_ID "text" --to cos [--status answered] [--thread ID]   answer an agent's question
-  bridge.py hello [--to cos]                      self-test: asks the agent for PONG
-  bridge.py send  envelope.json [--to cos]        send a prepared envelope
-  bridge.py check [--to cos] | peers | version
-  bridge.py add-peer cos --name CoS [--inbox trig_...] [--inbox-mode | --stdin]
+  bridge.py answer Q_ID "text" --to ava [--status answered] [--thread ID]   answer an agent's question
+  bridge.py hello [--to ava]                      self-test: asks the agent for PONG
+  bridge.py send  envelope.json [--to ava]        send a prepared envelope
+  bridge.py check [--to ava] | peers | version
+  bridge.py add-peer ava --name Ava [--inbox trig_...] [--inbox-mode | --stdin]
+  bridge.py drop < envelope.json                  the agent's local exec leaves a message for local sessions
 
 Delivery: if the peer has a webhook (fast lane) it is POSTed and prints "SENT ... via=webhook".
 Otherwise (zero-touch, the default) it prints "SEND_VIA_INBOX routine=... id=..." and an
@@ -30,6 +31,7 @@ import secrets
 import stat
 import subprocess
 import sys
+import time
 import urllib.error
 import urllib.request
 
@@ -38,8 +40,13 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REPO_URL = "https://github.com/francoCosimo95/claude-grok-bridge"
 DEFAULT_CONFIG = os.path.join(os.path.expanduser("~"), ".config", "grok-bridge", "config.json")
 BODY_FIELD = {"question": "question", "request": "request", "note": "note", "answer": "answer"}
-STATUSES = ["answered", "accepted", "escalated", "needs_confirmation", "done", "declined"]
+A2A_STATE = {  # each status as an A2A TaskState, sent as "state" so A2A tools can read answers
+    "answered": "TASK_STATE_COMPLETED", "done": "TASK_STATE_COMPLETED", "accepted": "TASK_STATE_WORKING",
+    "escalated": "TASK_STATE_WORKING", "needs_confirmation": "TASK_STATE_INPUT_REQUIRED", "declined": "TASK_STATE_REJECTED",
+}
+STATUSES = list(A2A_STATE)
 MAX_BYTES = 60_000
+AGENTS_BLOCK = re.compile(r"<!-- grok-bridge:agents -->.*?<!-- /grok-bridge:agents -->", re.S)
 LONG_TOKEN = re.compile(r"[A-Za-z0-9_\-.]{24,}")
 HEADER_PREFIX = re.compile(r"(?i)^\s*authorization\s*:\s*")
 
@@ -212,7 +219,7 @@ def cmd_message(args, kind):
 def cmd_answer(args):
     peer = args.to or default_peer() or fail(2, "Say which agent: --to <peer>")
     env = envelope("answer", " ".join(args.text), peer, args)
-    env["in_reply_to"], env["status"] = args.in_reply_to, args.status
+    env["in_reply_to"], env["status"], env["state"] = args.in_reply_to, args.status, A2A_STATE[args.status]
     env["thread"] = args.thread or args.in_reply_to
     deliver(env, resolve(peer))
 
@@ -235,7 +242,7 @@ def cmd_send(args):
 
 
 def cmd_check(args):
-    peer = args.to or default_peer() or "cos"
+    peer = args.to or default_peer() or fail(2, "Say which agent: --to <peer> (see: bridge.py peers)")
     t = resolve(peer)
     note = "" if t["configured"] else " (not configured here: messages go through the inbox)"
     print(f"CONFIG_OK peer={peer} name={t['name']} mode={t['mode']} inbox={t['inbox'] or 'FIND:claude-grok-bridge inbox'} version={version()}{note}")
@@ -280,8 +287,62 @@ def cmd_add_peer(args):
     if args.inbox:
         cfg["inbox_routine"] = args.inbox
     print(f"Saved '{args.peer}' to {save_config(cfg)} (only you can read it).")
+    noted = remember_agents(cfg["peers"])
+    if noted:
+        print(f"Listed your agents in {noted}, so Claude Code knows their names.")
     if not args.stdin and not args.inbox_mode:
         print(f"\n  NEXT STEP: go back to {name}'s chat in Grok Bot and write \"done\".\n")
+
+
+def drop_dir():
+    return os.environ.get("GROK_BRIDGE_DROP_DIR") or os.path.join(os.path.dirname(config_path()), "drop")
+
+
+def cmd_drop(_args):
+    """Keep an agent's message where the grok-bridge channel of a running local session picks it up."""
+    try:
+        env = json.load(sys.stdin)
+    except ValueError:
+        fail(4, "ENVELOPE_INVALID: stdin is not JSON")
+    if not isinstance(env, dict) or env.get("protocol") != PROTOCOL or not re.fullmatch(r"[A-Za-z0-9_.-]{1,80}", str(env.get("id", ""))):
+        fail(4, f"ENVELOPE_INVALID: needs protocol {PROTOCOL} and a plain id")
+    if (env.get("from") or {}).get("kind") == "claude-code":
+        fail(4, "ENVELOPE_INVALID: drop carries messages from an agent, not from Claude Code")
+    folder = drop_dir()
+    os.makedirs(folder, mode=0o700, exist_ok=True)
+    os.chmod(folder, 0o700)
+    for name in os.listdir(folder):
+        if time.time() - os.path.getmtime(os.path.join(folder, name)) > 86400:
+            os.remove(os.path.join(folder, name))
+    fd = os.open(os.path.join(folder, env["id"] + ".json"), os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w") as f:
+        json.dump(env, f, ensure_ascii=False)
+    print(f"DROPPED id={env['id']}")
+
+
+def claude_md_path():
+    base = os.environ.get("CLAUDE_CONFIG_DIR") or os.path.join(os.path.expanduser("~"), ".claude")
+    return os.environ.get("GROK_BRIDGE_CLAUDE_MD", os.path.join(base, "CLAUDE.md"))
+
+
+def remember_agents(peers):
+    """Keep one marked block in the user's CLAUDE.md naming their agents, so any name the user
+    chose ("Ava", "CoS") reads as a Grok Bot agent in every Claude Code session."""
+    path = claude_md_path()
+    if not os.path.isdir(os.path.dirname(path)):
+        return None
+    names = ", ".join(f"{entry.get('name') or key} (`--to {key}`)" for key, entry in sorted(peers.items()))
+    block = (f"<!-- grok-bridge:agents -->\nMy Grok Bot agents, reachable from Claude Code with the grok-bridge skill: "
+             f"{names}.\n<!-- /grok-bridge:agents -->")
+    try:
+        with open(path) as f:
+            text = f.read()
+    except FileNotFoundError:
+        text = ""
+    text = AGENTS_BLOCK.sub(lambda _m: block, text) if AGENTS_BLOCK.search(text) else text.rstrip("\n") + ("\n\n" if text.strip() else "") + block + "\n"
+    with open(path, "w") as f:
+        f.write(text)
+    return path
 
 
 def stdin_secrets():
@@ -344,6 +405,7 @@ def main():
     p.set_defaults(func=cmd_check)
     sub.add_parser("peers").set_defaults(func=cmd_peers)
     sub.add_parser("version").set_defaults(func=cmd_version)
+    sub.add_parser("drop", help="leave an agent's message (stdin) for the local channel").set_defaults(func=cmd_drop)
     p = sub.add_parser("add-peer", help="register a Grok agent on this machine")
     p.add_argument("peer")
     p.add_argument("--name")
