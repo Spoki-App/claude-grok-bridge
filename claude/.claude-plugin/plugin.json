@@ -1,6 +1,6 @@
 {
   "name": "grok-bridge",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "Talk to your Grok Bot agents from Claude Code: ask, tell, note, and get answers back in the session.",
   "author": {
     "name": "Cosimo Franco",

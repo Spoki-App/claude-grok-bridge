@@ -6,6 +6,8 @@ Versioning: [SemVer](https://semver.org/) for the kit. The wire protocol has its
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-10-19
+
 ### Changed
 - Faster and cheaper polling: the agent's poll runs on the small model (`haiku`, override with
   `CLAUDE_BRIDGE_POLL_MODEL`), since it only lists runs and reads logs.
