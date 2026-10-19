@@ -37,12 +37,23 @@ mode `cli`, `claude_cli_found: true`.
 - Not signed in: **Next step for you:** sign in on my box (tell them how your box lets them run
   `claude /login`), then tell me "done".
 
-## Step 2 of 5: your routine
+## Step 2 of 5: your routine and your "Claude Code" plugin
 
-If you have no routine named **"Claude Code bridge"**, create it with a **webhook** trigger. Set
-(or reset, on update) its prompt to exactly the "Routine prompt" block in
-`/workspace/claude-grok-bridge/grok/ROUTINE_PROMPT.md`, with `<AGENT>` and `<OWNER>` replaced.
-That prompt reads the installed instructions at run time, so later updates need no edit here.
+1. **Routine.** If you have no routine named **"Claude Code bridge"**, create it with a
+   **webhook** trigger. Set (or reset, on update) its prompt to exactly the "Routine prompt"
+   block in `/workspace/claude-grok-bridge/grok/ROUTINE_PROMPT.md`, with `<AGENT>` and `<OWNER>`
+   replaced. That prompt reads the installed instructions at run time.
+2. **Plugin.** Create (or update) a plugin shown as **"Claude Code"** in your owner's "Manage
+   plugins and skills", the same way you create your other plugins (for example google-chat):
+   - connector: stdio command `python3 /workspace/claude-grok-bridge/grok/mcp_server.py`
+     (no dependencies; tools `check_bridge`, `read_envelope`, `reply_to_claude`,
+     `message_claude`);
+   - skill: `/workspace/claude-grok-bridge/plugins/claude-code/skills/claude-code-bridge/SKILL.md`;
+   - description and version: from `plugins/claude-code/.cursor-plugin/plugin.json`.
+   If your plugin tooling installs from GitHub marketplaces, this repo is one
+   (`.cursor-plugin/marketplace.json`, plugin `claude-code`). Then call `check_bridge` through the
+   new connector. If you cannot create plugins, say so in one line and continue: the routine
+   works without the plugin.
 
 ## Step 3 of 5: connect your owner's Mac
 

@@ -19,6 +19,8 @@ import pathlib, re, sys
 new, today = sys.argv[1], sys.argv[2]
 c = pathlib.Path("CHANGELOG.md"); s = c.read_text()
 c.write_text(s.replace("## [Unreleased]\n", f"## [Unreleased]\n\n## [{new}] - {today}\n", 1))
+pj = pathlib.Path("plugins/claude-code/.cursor-plugin/plugin.json")
+pj.write_text(re.sub(r'"version": "\d+\.\d+\.\d+"', f'"version": "{new}"', pj.read_text()))
 p = pathlib.Path("claude/INBOX_ROUTINE.md"); s = p.read_text()
 p.write_text(re.sub(r"claude-grok-bridge inbox v\d+\.\d+\.\d+", f"claude-grok-bridge inbox v{new}", s))
 PY

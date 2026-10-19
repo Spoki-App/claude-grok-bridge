@@ -48,7 +48,8 @@ sequenceDiagram
 | `VERSION`, `CHANGELOG.md`, `scripts/release.sh` | versioning and one-command releases |
 | `claude/skills/grok-bridge/` | Claude Code skill + `send_to_grok.py` |
 | `claude/INBOX_ROUTINE.md` | the inbox routine (create body + prompt) |
-| `grok/mcp_server.py` | Grok Bot custom connector **"claude-code"** (stdio MCP): `check_bridge`, `read_envelope`, `reply_to_claude` |
+| `plugins/claude-code/` | Grok Bot plugin **"Claude Code"**: connector + skill, created by the agent itself (also a `.cursor-plugin` marketplace) |
+| `grok/mcp_server.py` | the connector: dependency-free stdio MCP server (`check_bridge`, `read_envelope`, `reply_to_claude`, `message_claude`) |
 | `grok/reply_to_claude.py` | answers back to Claude: via the Claude CLI already on the box (no token) or a routine API token |
 | `grok/BOOTSTRAP.md` | what the agent follows to set everything up |
 | `grok/ROUTINE_PROMPT.md` | the Grok agent's "Claude Code bridge" routine |

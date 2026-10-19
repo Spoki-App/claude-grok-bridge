@@ -1,0 +1,11 @@
+{
+  "name": "claude-grok-bridge",
+  "owner": {"name": "Cosimo Franco"},
+  "plugins": [
+    {
+      "name": "claude-code",
+      "source": "./plugins/claude-code",
+      "description": "Claude Code connector and skill for Grok Bot agents (claude-grok-bridge)."
+    }
+  ]
+}

@@ -9,7 +9,8 @@ Set up the Claude Code bridge: follow https://github.com/francoCosimo95/claude-g
 That's it. The agent, by itself (`grok/BOOTSTRAP.md`):
 1. clones the repo on its box and, through the Claude CLI signed in there (your Claude
    account), finds or **creates** your "Grok bridge inbox" routine;
-2. creates its own "Claude Code bridge" routine with a webhook trigger;
+2. creates its own "Claude Code bridge" routine (webhook) and a **"Claude Code"** plugin
+   (connector + skill) that you see in "Manage plugins and skills";
 3. on your Mac, through Grok Bot's local exec, installs the Claude Code skill and writes its
    webhook URL and key into `~/.config/grok-bridge/config.json` (chmod 600), never in a chat;
 4. runs a self-test (a question from your Mac answered PONG back into Claude);
@@ -40,8 +41,8 @@ python3 -I ~/.claude/skills/grok-bridge/scripts/send_to_grok.py --version
 - Manual install and peer config on a Mac:
   `curl -fsSL https://raw.githubusercontent.com/francoCosimo95/claude-grok-bridge/main/install.sh | sh -s -- --peer cos --name CoS --inbox <trig id>`
   (hidden prompts).
-- Optional connector: register `grok/mcp_server.py` as a stdio MCP connector named `claude-code`
-  for typed tools (`check_bridge`, `read_envelope`, `reply_to_claude`).
+- The agent cannot create plugins: the bridge still works through its routine; you can add the
+  connector by hand (stdio command `python3 /workspace/claude-grok-bridge/grok/mcp_server.py`).
 
 ## Cloud sessions
 

@@ -6,6 +6,15 @@ Versioning: [SemVer](https://semver.org/) for the kit. The wire protocol has its
 
 ## [Unreleased]
 
+### Added
+- Grok Bot plugin **"Claude Code"** (`plugins/claude-code/`): connector + skill, created by the
+  agent during setup like its other plugins, and listed in a `.cursor-plugin` marketplace.
+- Connector tool `message_claude`: the agent can message a Claude Code cloud session on its own
+  initiative.
+
+### Changed
+- The connector is now a dependency-free stdio MCP server (no venv, no `pip install`).
+
 ### Fixed
 - Accept an Authorization value pasted with its `Authorization:` header prefix (Grok Bot copies
   it that way); stripped on save and on send.
