@@ -51,7 +51,9 @@ Do exactly this and nothing else:
 2. Parse the payload as JSON. If it is not valid JSON, or its `protocol` field is not
    `claude-grok-bridge/1`, note REJECT and go to step 4.
 3. Keep the payload, re-serialized as compact single-line JSON, for the final reply (step 7).
-4. Call Claude_Code_Remote list_triggers once (first page, newest first). Steps 5 and 6 use it.
+4. Call Claude_Code_Remote list_triggers with include_completed true, and follow next_cursor while
+   the page still holds triggers created in the 24 hours before this run's fire time. Steps 5
+   and 6 use this listing.
 5. Deliver, unless IDLE or REJECT, and only if `from.kind` is not `claude-code` (messages from
    Claude Code to an agent are only logged; note "none" for step 7). If the listing already
    holds a trigger named `grok-bridge reply <id>` or `grok-bridge ask <id>` (this payload's own

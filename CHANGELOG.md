@@ -6,6 +6,10 @@ Versioning: [SemVer](https://semver.org/) for the kit. The wire protocol has its
 
 ## [Unreleased]
 
+### Fixed
+- The inbox lists triggers with `include_completed` and pages back 24 hours, so dedupe and
+  cleanup also see ended triggers whatever order the listing returns.
+
 ## [0.9.0] - 2026-10-19
 
 ### Added

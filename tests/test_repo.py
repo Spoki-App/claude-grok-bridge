@@ -59,6 +59,7 @@ class RepoConsistencyTests(unittest.TestCase):
         self.assertIn("named `grok-bridge reply <id>`", prompt.replace("\n      ", " "))
         self.assertNotIn("grok-bridge reply <in_reply_to", prompt, "two answers to one question share in_reply_to")
         self.assertIn("duplicate <trigger id>", prompt)
+        self.assertIn("include_completed true", prompt, "ended triggers must be visible to dedupe and cleanup")
 
     def test_json_files_parse(self):
         for p in tracked_files():
