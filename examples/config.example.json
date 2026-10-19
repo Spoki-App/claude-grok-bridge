@@ -1,0 +1,10 @@
+{
+  "inbox_routine": "trig_XXXXXXXXXXXXXXXXXXXXXXXX",
+  "peers": {
+    "cos": {
+      "name": "CoS",
+      "webhook_url": "https://<Grok Bot routine webhook URL>",
+      "authorization": "Bearer <routine webhook key>"
+    }
+  }
+}

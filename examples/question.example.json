@@ -1,0 +1,15 @@
+{
+  "protocol": "claude-grok-bridge/1",
+  "type": "question",
+  "id": "q-20261019-1010-ab12",
+  "from": {"kind": "claude-code", "label": "acme-api @ feat/billing (cloud)", "session_id": "session_XXXXXXXX"},
+  "to": "cos",
+  "subject": "Merge develop now or wait for the migration PR?",
+  "question": "Should this branch merge develop now, or wait until the migration PR lands?",
+  "context": "Branch is 14 commits behind develop. The migration PR touches the same model. CI is green on both.",
+  "options": ["A) merge develop now", "B) wait for the migration PR"],
+  "recommendation": "B, to avoid resolving the same conflict twice.",
+  "refs": {"card": "#1234", "repo": "acme/acme-api", "branch": "feat/billing", "pr": "https://github.com/acme/acme-api/pull/42"},
+  "reply_to": {"session_id": "session_XXXXXXXX"},
+  "sent_at": "2026-10-19T10:10:00Z"
+}
