@@ -14,16 +14,15 @@ from chats import CHAR_W, LINE_H, MAX_CHARS, PAD, STYLE, WIDTH  # noqa: E402
 
 ASSETS = pathlib.Path(__file__).resolve().parent.parent / "assets"
 CAPTION = "Replay of real exchanges from the 2026-10-19 logs. Real times shown, waits shortened."
-LABELS = {"you": "you · in Claude Code", "cos": "CoS · Grok Bot", "claude": "Claude Code"}
-COLORS = {"you": STYLE["you"], "cos": STYLE["grok"], "claude": STYLE["claude"]}
+LABELS = {"selftest": "Bridge self-test", "cos": "CoS · Grok Bot", "claude": "Claude Code"}
+COLORS = {"selftest": STYLE["claude"], "cos": STYLE["grok"], "claude": STYLE["claude"]}
 LOOP, START, STEP, TYPING, GAP = 16.0, 0.5, 1.2, 1.0, 0.8  # seconds on screen
 MUTED = "#8a8a8e"
 
 # (who, text, real UTC time or None, note or None); who "event" is a log line, not a chat bubble.
 EXCHANGES = [
-    ("1 · Claude Code asks the agent", [
-        ("you", "ask CoS for a PONG", None, None),
-        ("claude", "Sent question q-selftest-20261019-130932 to CoS.", "13:09:32", None),
+    ("1 · A question reaches the agent through the Claude inbox", [
+        ("selftest", "Reply with the single word PONG.", "13:09:32", "q-selftest-20261019-130932"),
         ("cos", "PONG", "13:10:17", "status answered"),
         ("event", "Claude inbox logged the answer", "13:10:23", None),
     ]),

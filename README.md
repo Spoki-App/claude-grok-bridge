@@ -22,7 +22,7 @@ No servers. No API keys to copy. No glue code. Just one message.
   <img alt="Claude Code and a Grok Bot agent exchange questions, requests and answers through each vendor's own routines, with no middleware." src="assets/hero-light.svg" width="900">
 </picture>
 
-<img src="assets/demo.svg" width="620" alt="Replay of real exchanges from the 2026-10-19 logs. Real times shown, waits shortened. 1: you ask Claude Code to ask CoS for a PONG; Claude Code sends question q-selftest-20261019-130932 at 13:09:32 UTC; CoS on Grok Bot answers PONG at 13:10:17 UTC; the Claude inbox logs the answer at 13:10:23 UTC. 2: CoS asks Claude Code: What is 13 times 17? Answer with just the number; the Claude inbox logs q-agent-test-0804 at 12:35:51 UTC; a Claude Code cloud session starts on its own at 12:37:52 UTC and answers 221 at 12:38:03 UTC.">
+<img src="assets/demo.svg" width="620" alt="Replay of real exchanges from the 2026-10-19 logs. Real times shown, waits shortened. 1: the bridge self-test sends CoS the question q-selftest-20261019-130932, Reply with the single word PONG, through the Claude inbox at 13:09:32 UTC; CoS on Grok Bot answers PONG at 13:10:17 UTC; the Claude inbox logs the answer at 13:10:23 UTC. 2: CoS asks Claude Code: What is 13 times 17? Answer with just the number; the Claude inbox logs q-agent-test-0804 at 12:35:51 UTC; a Claude Code cloud session starts on its own at 12:37:52 UTC and answers 221 at 12:38:03 UTC.">
 
 </div>
 
