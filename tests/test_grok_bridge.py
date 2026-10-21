@@ -117,10 +117,30 @@ class DeliveryTests(Base):
 
     def test_unexpected_remote_action_is_refused(self):
         env = bridge.answer(QUESTION, "CoS", "PONG")
-        with cli(tool_use_line("RemoteTrigger", {"action": "delete", "trigger_id": "trig_X"})):
+        with mock.patch.object(bridge, "ROOT", tempfile.mkdtemp()), cli(tool_use_line("RemoteTrigger", {"action": "delete", "trigger_id": "trig_X"})):
             out = bridge.deliver(env)
         self.assertFalse(out["delivered"])
         self.assertIn("ALERT", out["detail"])
+
+    def test_alert_keeps_a_redacted_private_transcript(self):
+        root, token = tempfile.mkdtemp(), "sk-ant-oat01-secretsecretsecret"
+        line = tool_use_line("RemoteTrigger", {"action": "delete", "trigger_id": "trig_X", "note": token})
+        with mock.patch.object(bridge, "ROOT", root), cli(line):
+            bridge.deliver(bridge.answer(QUESTION, "CoS", "PONG"))
+        [saved] = (pathlib.Path(root) / "alert-transcripts").glob("*.jsonl")
+        self.assertEqual(saved.stat().st_mode & 0o777, 0o600)
+        self.assertIn('"delete"', saved.read_text())
+        self.assertNotIn(token, saved.read_text())
+
+    def test_cli_blocks_the_tools_it_does_not_need(self):
+        with cli(DONE) as run:
+            bridge.run_cli("x", {"list"})
+        cmd = run.call_args.args[0]
+        blocked = cmd[cmd.index("--disallowedTools") + 1:cmd.index("--output-format")]
+        self.assertEqual(set(blocked), {"Bash", "Edit", "Write", "NotebookEdit", "WebFetch", "WebSearch", "Task"})
+        with cli(DONE) as run:
+            bridge.run_cli("x", {"list"}, tools=("RemoteTrigger", "WebFetch"))
+        self.assertNotIn("WebFetch", run.call_args.args[0][run.call_args.args[0].index("--disallowedTools"):])
 
     def test_missing_cli(self):
         with mock.patch.object(bridge.shutil, "which", return_value=None):
@@ -166,9 +186,14 @@ class PollTests(Base):
         self.assertEqual(cmd[cmd.index("--model") + 1], "haiku", "the most frequent call should be the cheapest")
 
     def test_poll_refuses_actions_outside_read_only(self):
-        with cli(tool_use_line("RemoteTrigger", {"action": "update", "trigger_id": "trig_X"}) + "\n" + DONE), self.assertRaises(SystemExit) as ctx:
+        with mock.patch.object(bridge, "ROOT", tempfile.mkdtemp()), \
+                cli(tool_use_line("RemoteTrigger", {"action": "update", "trigger_id": "trig_X"}) + "\n" + DONE), self.assertRaises(SystemExit) as ctx:
             bridge.poll("cos")
         self.assertIn("ALERT", str(ctx.exception))
+
+    def test_poll_may_read_a_routine_with_get(self):
+        with cli(tool_use_line("RemoteTrigger", {"action": "get", "trigger_id": "trig_X"}) + "\n" + DONE):
+            self.assertEqual(bridge.poll("cos"), [])
 
     def test_reads_answers_from_ask_sessions_with_a_wider_window(self):
         question = bridge.ask_claude("CoS", "cos", "What is 19 times 21?")
