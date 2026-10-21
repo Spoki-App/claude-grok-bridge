@@ -56,7 +56,7 @@ RUN_PROMPT = (
 )
 LOG_PROMPT = 'Use the RemoteTrigger tool once: action "get_run_log", session_id "{session}". Then reply with one word: done.'
 POLL_PROMPT = (
-    'Use only the RemoteTrigger tool, only its "list", "list_runs" and "get_run_log" actions. 1. Call "list_runs" with '
+    'Use only the RemoteTrigger tool, only its "list", "get", "list_runs" and "get_run_log" actions. 1. Call "list_runs" with '
     'trigger_id "{routine}"; if it returns a next_cursor and its oldest run is still newer than {since}, call it again '
     'with that cursor. For every run created after {since}, call "get_run_log" with its session id. 2. Call "list" '
     '(follow next_cursor). For every routine named "grok-bridge ask ..." that fired or changed after {ask_since} '
@@ -158,7 +158,9 @@ def run_cli(prompt, allowed, tools=("RemoteTrigger",), timeout=300, model=None):
     claude = shutil.which("claude")
     if not claude:
         return False, [], "claude CLI not found on this box (npm install -g @anthropic-ai/claude-code)"
-    cmd = [claude, "-p", prompt, "--allowedTools", *tools, "--output-format", "stream-json", "--verbose",
+    blocked = [t for t in ("Bash", "Edit", "Write", "NotebookEdit", "WebFetch", "WebSearch", "Task") if t not in tools]
+    cmd = [claude, "-p", prompt, "--allowedTools", *tools, "--disallowedTools", *blocked,
+           "--output-format", "stream-json", "--verbose",
            "--model", model or os.environ.get("CLAUDE_BRIDGE_CLI_MODEL", "sonnet")]
     try:
         out = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, stdin=subprocess.DEVNULL)
@@ -168,6 +170,14 @@ def run_cli(prompt, allowed, tools=("RemoteTrigger",), timeout=300, model=None):
         return False, [], TOKENISH.sub("<redacted>", (out.stderr or out.stdout).strip())[-500:]
     unexpected = sorted(set(remote_actions(out.stdout)) - set(allowed))
     if unexpected:
+        try:
+            dump = os.path.join(ROOT, "alert-transcripts")
+            os.makedirs(dump, mode=0o700, exist_ok=True)
+            path = os.path.join(dump, now().replace(":", "") + ".jsonl")
+            with open(os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), "w") as f:
+                f.write(TOKENISH.sub("<redacted>", out.stdout))
+        except OSError:
+            pass
         return False, [], f"ALERT: the model called RemoteTrigger {unexpected}, outside {sorted(allowed)}. Tell your owner."
     return True, stream_strings(out.stdout), final_result(out.stdout)
 
@@ -311,7 +321,7 @@ def poll(peer):
     ask_since = (since_dt - ASK_WINDOW).strftime("%Y-%m-%dT%H:%M:%SZ")
     prompt = POLL_PROMPT.format(routine=inbox_routine(), since=state["since"], ask_since=ask_since)
     # Polling only lists and reads logs, so it runs on the small model: it is the most frequent call.
-    ok, strings, result = run_cli(prompt, {"list", "list_runs", "get_run_log"}, timeout=420,
+    ok, strings, result = run_cli(prompt, {"list", "get", "list_runs", "get_run_log"}, timeout=420,
                                   model=os.environ.get("CLAUDE_BRIDGE_POLL_MODEL", "haiku"))
     if not ok:
         sys.exit(f"poll failed: {result}")

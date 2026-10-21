@@ -6,9 +6,21 @@ Versioning: [SemVer](https://semver.org/) for the kit. The wire protocol has its
 
 ## [Unreleased]
 
+## [0.12.2] - 2026-10-21
+
 ### Added
 - Animated replay of two real exchanges at the top of the README (`assets/demo.svg`, rendered by
   `scripts/demo.py`): real times from the logs, waits shortened.
+
+### Changed
+- The agent's poll may also call the read-only RemoteTrigger `get` action (to read one routine);
+  any action outside `list`, `get`, `list_runs` and `get_run_log` still fails the run.
+- Every `claude` CLI call blocks the tools it does not need (`Bash`, `Edit`, `Write`,
+  `NotebookEdit`, `WebFetch`, `WebSearch`, `Task`) unless the call allows them explicitly.
+
+### Fixed
+- When a CLI run stops with an ALERT (poll or delivery), its transcript is kept for debugging in
+  `alert-transcripts/<time>.jsonl` (tokens redacted, readable by the owner only, gitignored).
 
 ## [0.12.1] - 2026-10-19
 
