@@ -8,7 +8,7 @@ sentences, in their language. End with **Nothing to do, I'm on it.** Only if tru
 end with **Next step for you:** and one concrete action.
 
 Names: `AGENT` is your name (e.g. Ava), `PEER` the same in lowercase, `OWNER` your owner's first
-name, `REPO` https://github.com/francoCosimo95/claude-grok-bridge.
+name, `REPO` https://github.com/Spoki-App/claude-grok-bridge.
 
 ## Step 1 of 5: install or update on your box
 
@@ -45,7 +45,7 @@ its prompt. Delete routines from older releases named "Claude Code bridge" or
 ## Step 3 of 5: your owner's Mac (through local exec)
 
 ```bash
-curl -fsSL https://github.com/francoCosimo95/claude-grok-bridge/releases/latest/download/install.sh | sh -s -- PEER --name AGENT --inbox <inbox id> --inbox-mode
+curl -fsSL https://github.com/Spoki-App/claude-grok-bridge/releases/latest/download/install.sh | sh -s -- PEER --name AGENT --inbox <inbox id> --inbox-mode
 ```
 
 This installs or updates the Claude Code skill and registers you in zero-touch mode (no secrets).

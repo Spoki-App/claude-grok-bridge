@@ -9,8 +9,10 @@ plugins and a shell. Not the Grok chat, and no xAI API key involved.
 
 No servers. No API keys to copy. No glue code. Just one message.
 
-[![CI](https://github.com/francoCosimo95/claude-grok-bridge/actions/workflows/ci.yml/badge.svg)](https://github.com/francoCosimo95/claude-grok-bridge/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/francoCosimo95/claude-grok-bridge?sort=semver)](https://github.com/francoCosimo95/claude-grok-bridge/releases)
+An open source project by [Spoki](https://spoki.com).
+
+[![CI](https://github.com/Spoki-App/claude-grok-bridge/actions/workflows/ci.yml/badge.svg)](https://github.com/Spoki-App/claude-grok-bridge/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/Spoki-App/claude-grok-bridge?sort=semver)](https://github.com/Spoki-App/claude-grok-bridge/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Protocol](https://img.shields.io/badge/protocol-claude--grok--bridge%2F1-111)](PROTOCOL.md)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)](#faq)
@@ -29,7 +31,7 @@ No servers. No API keys to copy. No glue code. Just one message.
 ## All you have to do is send this to your Grok agent
 
 ```text
-Set up the Claude Code bridge: follow https://github.com/francoCosimo95/claude-grok-bridge/blob/main/grok/BOOTSTRAP.md
+Set up the Claude Code bridge: follow https://github.com/Spoki-App/claude-grok-bridge/blob/main/grok/BOOTSTRAP.md
 ```
 
 **That's it.** Your agent installs everything on both sides, wires itself to Claude Code, runs a
@@ -93,13 +95,13 @@ Your agent follows [`grok/BOOTSTRAP.md`](grok/BOOTSTRAP.md) and keeps you posted
 
 - **Claude CLI signed in on its box.** If not, it asks you once to sign in.
 - **Local exec on your Mac** (Grok Bot's). Without it you paste one line in the Terminal:
-  `curl -fsSL https://github.com/francoCosimo95/claude-grok-bridge/releases/latest/download/install.sh | sh -s -- <peer> --name <Agent> --inbox <trig id> --inbox-mode`
+  `curl -fsSL https://github.com/Spoki-App/claude-grok-bridge/releases/latest/download/install.sh | sh -s -- <peer> --name <Agent> --inbox <trig id> --inbox-mode`
 - **Fast lane (optional, recommended).** Messages reach the agent in about a second instead of
   its poll interval, and the agent can poll less often. If the agent cannot read its webhook
   routine's key, `bridge.py check` prints the one command to run (it asks for the URL and key,
   hidden, and stores them `chmod 600`).
 - **Claude Code plugin.** The agent installs the skill for you; you can also install it yourself:
-  `/plugin install grok-bridge --marketplace francoCosimo95/claude-grok-bridge`
+  `/plugin install grok-bridge --marketplace Spoki-App/claude-grok-bridge`
 - **Instant answers in a terminal session (experimental).** The plugin includes a Claude Code
   [channel](https://code.claude.com/docs/en/channels): when the agent can reach your Mac (local
   exec), its answer appears in your open session at once instead of waiting for a poll. Channels
@@ -109,7 +111,7 @@ Your agent follows [`grok/BOOTSTRAP.md`](grok/BOOTSTRAP.md) and keeps you posted
   (a dropped message showed up in an open session, which answered on its own); the agent's drop
   through local exec from its poll routine is still to be checked.
 - **Cloud sessions** need the plugin enabled for the repository. Add to its `.claude/settings.json`:
-  `{"extraKnownMarketplaces": {"claude-grok-bridge": {"source": {"source": "github", "repo": "francoCosimo95/claude-grok-bridge"}}}, "enabledPlugins": {"grok-bridge@claude-grok-bridge": true}}`.
+  `{"extraKnownMarketplaces": {"claude-grok-bridge": {"source": {"source": "github", "repo": "Spoki-App/claude-grok-bridge"}}}, "enabledPlugins": {"grok-bridge@claude-grok-bridge": true}}`.
   They send through the inbox with their own login and get answers pushed back. No keys.
   So they also know your agent by name, paste into the repository's `CLAUDE.md` the
   `FOR_REPO_CLAUDE_MD` line that `python3 -I ~/.claude/skills/grok-bridge/bridge.py peers` prints.
@@ -190,12 +192,12 @@ path without notice. The inbox log stays readable in claude.ai/code/routines in 
 | Grok Bot routines, webhook trigger, local exec | Grok Bot features | poll interval or fast lane change; the setup line repairs it |
 
 Each message is a short run on your Claude plan (30 per hour per routine). Claude.ai chat cannot
-take part. A scheduled smoke test is planned ([#1](https://github.com/francoCosimo95/claude-grok-bridge/issues/1)).
+take part. A scheduled smoke test is planned ([#1](https://github.com/Spoki-App/claude-grok-bridge/issues/1)).
 
 **Compatibility.** Until 1.0, minor versions may change commands. These are meant to stay: the
 `claude-grok-bridge/1` envelope (new fields are optional, readers ignore unknown ones), the
 `ask`, `tell`, `note`, `answer` commands, the inbox's three output lines, and the one setup line.
-1.0 comes after weeks of real use with no breaking change ([#2](https://github.com/francoCosimo95/claude-grok-bridge/issues/2)).
+1.0 comes after weeks of real use with no breaking change ([#2](https://github.com/Spoki-App/claude-grok-bridge/issues/2)).
 
 ## FAQ
 
@@ -240,12 +242,12 @@ the inbox pushes answers from any agent kind. Grok Bot is the first verified pee
 - [ ] A second verified agent platform
 
 Next, each tracked as an issue:
-- [ ] Scheduled end-to-end smoke test ([#1](https://github.com/francoCosimo95/claude-grok-bridge/issues/1)) and a clear list of the preview features it relies on ([#5](https://github.com/francoCosimo95/claude-grok-bridge/issues/5))
-- [ ] Stable interface and a 1.0 after weeks of real use ([#2](https://github.com/francoCosimo95/claude-grok-bridge/issues/2))
-- [ ] Answers in under a minute ([#6](https://github.com/francoCosimo95/claude-grok-bridge/issues/6)), signed owner requests ([#7](https://github.com/francoCosimo95/claude-grok-bridge/issues/7)), less logic in the inbox prompt ([#8](https://github.com/francoCosimo95/claude-grok-bridge/issues/8))
-- [ ] Demo of the round trip ([#3](https://github.com/francoCosimo95/claude-grok-bridge/issues/3)) and an unambiguous name ([#4](https://github.com/francoCosimo95/claude-grok-bridge/issues/4))
+- [ ] Scheduled end-to-end smoke test ([#1](https://github.com/Spoki-App/claude-grok-bridge/issues/1)) and a clear list of the preview features it relies on ([#5](https://github.com/Spoki-App/claude-grok-bridge/issues/5))
+- [ ] Stable interface and a 1.0 after weeks of real use ([#2](https://github.com/Spoki-App/claude-grok-bridge/issues/2))
+- [ ] Answers in under a minute ([#6](https://github.com/Spoki-App/claude-grok-bridge/issues/6)), signed owner requests ([#7](https://github.com/Spoki-App/claude-grok-bridge/issues/7)), less logic in the inbox prompt ([#8](https://github.com/Spoki-App/claude-grok-bridge/issues/8))
+- [ ] Demo of the round trip ([#3](https://github.com/Spoki-App/claude-grok-bridge/issues/3)) and an unambiguous name ([#4](https://github.com/Spoki-App/claude-grok-bridge/issues/4))
 
-All open work: [issues](https://github.com/francoCosimo95/claude-grok-bridge/issues). Ideas: [Discussions](https://github.com/francoCosimo95/claude-grok-bridge/discussions).
+All open work: [issues](https://github.com/Spoki-App/claude-grok-bridge/issues). Ideas: [Discussions](https://github.com/Spoki-App/claude-grok-bridge/discussions).
 Contributing: [CONTRIBUTING.md](CONTRIBUTING.md) (layout, tests, the five pillars).
 
 ## License

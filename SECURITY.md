@@ -3,7 +3,7 @@
 ## Reporting
 
 Please report vulnerabilities **privately** through GitHub:
-https://github.com/francoCosimo95/claude-grok-bridge/security/advisories/new
+https://github.com/Spoki-App/claude-grok-bridge/security/advisories/new
 
 Do not open a public issue, and do not include real webhook URLs, tokens or session contents in
 the report: describe the issue and how to reproduce it with fake values. You will get an answer
@@ -27,7 +27,7 @@ account (the inbox) or the owner's Mac (the fast lane), not because it is signed
 would not stop the realistic attacker, a prompt-injected session on that same Mac, which holds
 any local secret too. So the agent's own rules stay the backstop: anything reserved to the
 owner (money, production, merges, messages sent as the owner) gets `needs_confirmation` and is
-asked in the agent's chat. See [#7](https://github.com/francoCosimo95/claude-grok-bridge/issues/7).
+asked in the agent's chat. See [#7](https://github.com/Spoki-App/claude-grok-bridge/issues/7).
 
 ## Supported versions
 

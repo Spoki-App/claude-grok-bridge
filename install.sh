@@ -1,9 +1,9 @@
 #!/bin/sh
 # claude-grok-bridge: install or update the Claude Code skill on this Mac (latest release).
-#   curl -fsSL https://github.com/francoCosimo95/claude-grok-bridge/releases/latest/download/install.sh | sh
+#   curl -fsSL https://github.com/Spoki-App/claude-grok-bridge/releases/latest/download/install.sh | sh
 # Extra arguments register a Grok agent, e.g.: | sh -s -- ava --name Ava --inbox trig_... --inbox-mode
 set -e
-REPO="${CGB_REPO:-https://github.com/francoCosimo95/claude-grok-bridge}"
+REPO="${CGB_REPO:-https://github.com/Spoki-App/claude-grok-bridge}"
 DIR="${CGB_DIR:-$HOME/claude-grok-bridge}"
 SKILL="$HOME/.claude/skills/grok-bridge"
 command -v git >/dev/null && command -v python3 >/dev/null || { echo "Needs git and python3: run xcode-select --install, then this again."; exit 1; }
