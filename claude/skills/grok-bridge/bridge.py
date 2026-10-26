@@ -41,7 +41,7 @@ sys.path.insert(0, HERE)  # python3 -I leaves the script's own folder off sys.pa
 
 from protocol import A2A_STATE, BODY_FIELD, ID_SHAPE, PROTOCOL, STATUSES, problem  # noqa: E402
 
-REPO_URL = "https://github.com/francoCosimo95/claude-grok-bridge"
+REPO_URL = "https://github.com/Spoki-App/claude-grok-bridge"
 DEFAULT_CONFIG = os.path.join(os.path.expanduser("~"), ".config", "grok-bridge", "config.json")
 AGENTS_BLOCK = re.compile(r"<!-- grok-bridge:agents -->.*?<!-- /grok-bridge:agents -->", re.S)
 LONG_TOKEN = re.compile(r"[A-Za-z0-9_\-.]{24,}")

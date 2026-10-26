@@ -79,7 +79,7 @@ you plan to do, and ask the user before any side effect (rule zero).
 ## Setup, check, update
 
 - Setup or update (the user does this once): they send their Grok agent
-  `Set up the Claude Code bridge: follow https://github.com/francoCosimo95/claude-grok-bridge/blob/main/grok/BOOTSTRAP.md`
+  `Set up the Claude Code bridge: follow https://github.com/Spoki-App/claude-grok-bridge/blob/main/grok/BOOTSTRAP.md`
 - `$B peers` also prints a `FOR_REPO_CLAUDE_MD` line: in a cloud session's repository it lets
   sessions know the agent's name.
 - `$B check --to <peer>` shows the mode (`webhook` or `inbox`); `$B peers` lists agents;
