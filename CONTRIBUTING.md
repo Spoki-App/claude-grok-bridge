@@ -50,6 +50,9 @@ needs `/2` and an issue first.
 
 ## Releases (maintainers)
 
-`scripts/release.sh X.Y.Z` on a clean `main` bumps `VERSION`, the inbox marker and the plugin
-version, syncs the skill, tags, pushes and publishes the release. Users update by sending their
+`main` is protected: no direct pushes, every change lands through a pull request with green CI
+and every review thread resolved. `scripts/release.sh X.Y.Z` on a clean `main` follows the same
+path: it bumps `VERSION`, the inbox marker and the plugin version and syncs the skill on a
+`release/vX.Y.Z` branch, opens the release PR, waits for CI, merges it, then tags the merge and
+publishes the release. Users update by sending their
 agent the setup line again.

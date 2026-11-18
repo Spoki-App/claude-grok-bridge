@@ -6,6 +6,9 @@ Versioning: [SemVer](https://semver.org/) for the kit. The wire protocol has its
 
 ## [Unreleased]
 
+### Changed
+- `main` is protected (pull requests only, green CI, resolved review threads), so `scripts/release.sh` now ships each release through a release PR before tagging.
+
 ## [0.12.2] - 2026-10-21
 
 ### Added
