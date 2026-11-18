@@ -7,7 +7,31 @@ echo "$NEW" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || { echo "usage: scripts/rele
 BRANCH="release/v$NEW"
 
 notes_for() {
-  awk -v heading="## [$1]" 'index($0, heading) == 1 {f=1; next} /^## \[/ {f=0} f' CHANGELOG.md | sed '/^[[:space:]]*$/d'
+  if [ -n "$2" ]; then git show "$2:CHANGELOG.md"; else cat CHANGELOG.md; fi |
+    awk -v heading="## [$1]" 'index($0, heading) == 1 {f=1; next} /^## \[/ {f=0} f' | sed '/^[[:space:]]*$/d'
+}
+
+pr_field() {
+  gh pr list --state all --head "$BRANCH" --json number,state,mergeCommit --jq ".[0].$1 // empty"
+}
+
+retry() {
+  limit="$1"; shift
+  tries=0
+  until "$@"; do
+    tries=$((tries + 1))
+    [ "$tries" -le "$limit" ] || return 1
+    sleep 5
+  done
+}
+
+merge_commit_known() {
+  SHA="$(pr_field mergeCommit.oid)"
+  [ -n "$SHA" ]
+}
+
+merge_commit_fetched() {
+  git fetch -q --tags origin && git cat-file -e "$SHA^{commit}" 2>/dev/null
 }
 
 wait_for_ci() {
@@ -23,21 +47,23 @@ wait_for_ci() {
 }
 
 finish() {
-  if [ "$(gh pr view "$BRANCH" --json state --jq .state)" != "MERGED" ]; then
+  [ -n "$(pr_field number)" ] || { echo "no pull request for $BRANCH"; exit 1; }
+  if [ "$(pr_field state)" != "MERGED" ]; then
     wait_for_ci
     gh pr merge "$BRANCH" --squash --delete-branch
   fi
+  retry 12 merge_commit_known || { echo "GitHub reports no merge commit for $BRANCH yet. Then: scripts/release.sh $NEW finish"; exit 1; }
+  retry 12 merge_commit_fetched || { echo "merge commit $SHA not on origin yet. Then: scripts/release.sh $NEW finish"; exit 1; }
   git checkout -q main
-  git pull -q --ff-only origin main
-  git fetch -q --tags origin
+  git merge -q --ff-only origin/main
   if ! git rev-parse -q --verify "refs/tags/v$NEW" >/dev/null; then
-    git tag -a "v$NEW" -m "v$NEW"
+    git tag -a "v$NEW" "$SHA" -m "v$NEW"
     git push -q origin "v$NEW"
   fi
   if ! gh release view "v$NEW" >/dev/null 2>&1; then
-    notes_for "$NEW" | gh release create "v$NEW" install.sh --title "v$NEW" --notes-file -
+    notes_for "$NEW" "$SHA" | gh release create "v$NEW" install.sh --title "v$NEW" --notes-file -
   fi
-  echo "released v$NEW"
+  echo "released v$NEW at $SHA"
 }
 
 if [ "$MODE" = "finish" ]; then
