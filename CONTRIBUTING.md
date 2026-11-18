@@ -54,5 +54,6 @@ needs `/2` and an issue first.
 and every review thread resolved. `scripts/release.sh X.Y.Z` on a clean `main` follows the same
 path: it bumps `VERSION`, the inbox marker and the plugin version and syncs the skill on a
 `release/vX.Y.Z` branch, opens the release PR, waits for CI, merges it, then tags the merge and
-publishes the release. Users update by sending their
+publishes the release. If it stops halfway (CI failed or slow), fix the cause and run
+`scripts/release.sh X.Y.Z finish`: it skips whatever is already done. Users update by sending their
 agent the setup line again.
